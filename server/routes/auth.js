@@ -251,16 +251,16 @@ router.post('/login', async (req, res) => {
  */
 router.post('/send-mobile-otp', async (req, res) => {
   try {
-    const { mobileNo } = req.body;
-    if (!mobileNo) {
+    const rawMobile = req.body.mobileNo || req.body.mobile || req.body.phone;
+    if (!rawMobile) {
       return res.status(400).json({ success: false, message: '10-digit mobile number is required' });
     }
 
-    const cleanNumber = mobileNo.trim().replace(/\D/g, '').slice(-10);
+    const cleanNumber = String(rawMobile).trim().replace(/\D/g, '').slice(-10);
     const student = await Student.findOne({
       $or: [
         { mobileNo: cleanNumber },
-        { mobileNo: `98201${cleanNumber.slice(-5)}` },
+        { mobileNo: new RegExp(cleanNumber + '$') },
         { fatherMobileNo: cleanNumber },
         { motherMobileNo: cleanNumber }
       ]
@@ -269,7 +269,7 @@ router.post('/send-mobile-otp', async (req, res) => {
     if (!student) {
       return res.status(404).json({
         success: false,
-        message: `Mobile number ${mobileNo} is not registered with any coaching batch.`
+        message: `Mobile number ${rawMobile} is not registered with any coaching batch.`
       });
     }
 
@@ -278,9 +278,10 @@ router.post('/send-mobile-otp', async (req, res) => {
 
     res.json({
       success: true,
-      message: `OTP sent to ${mobileNo}`,
+      message: `OTP sent to ${rawMobile}`,
       studentName: student.fname,
       demoOtp: generatedOtp,
+      otp: generatedOtp,
     });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Failed to dispatch OTP', error: err.message });
@@ -292,12 +293,16 @@ router.post('/send-mobile-otp', async (req, res) => {
  */
 router.post('/student-mobile-login', async (req, res) => {
   try {
-    const { mobileNo, otp, pin, password } = req.body;
-    if (!mobileNo) {
+    const rawMobile = req.body.mobileNo || req.body.mobile || req.body.phone;
+    const otp = req.body.otp || req.body.pin || req.body.password;
+    const pin = req.body.pin;
+    const password = req.body.password;
+
+    if (!rawMobile) {
       return res.status(400).json({ success: false, message: 'Mobile number is required' });
     }
 
-    const cleanNumber = mobileNo.trim().replace(/\D/g, '').slice(-10);
+    const cleanNumber = String(rawMobile).trim().replace(/\D/g, '').slice(-10);
     const student = await Student.findOne({
       $or: [
         { mobileNo: cleanNumber },
