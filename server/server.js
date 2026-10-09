@@ -1,9 +1,9 @@
 const dns = require('dns');
 try {
-  dns.setServers(['8.8.8.8', '8.8.4.4', '1.1.1.1']);
-} catch (e) {
-  console.warn('DNS server setting warning:', e.message);
-}
+  if (dns.setDefaultResultOrder) {
+    dns.setDefaultResultOrder('ipv4first');
+  }
+} catch (e) {}
 
 const express = require('express');
 const http = require('http');
@@ -13,6 +13,7 @@ const dotenv = require('dotenv');
 const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
 const { Server } = require('socket.io');
+const connectDB = require('./utils/db');
 
 dotenv.config();
 
@@ -30,14 +31,12 @@ const io = new Server(server, {
 app.set('io', io);
 
 io.on('connection', (socket) => {
-  // Join institute specific room
   socket.on('join_institute', (instituteId) => {
     if (instituteId) {
       socket.join(`inst_${instituteId}`);
     }
   });
 
-  // Join batch room
   socket.on('join_batch', (batchId) => {
     if (batchId) {
       socket.join(`batch_${batchId}`);
@@ -54,6 +53,16 @@ app.use(cors());
 app.use(cookieParser());
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ extended: true, limit: '20mb' }));
+
+// Serverless DB Auto-Connect Middleware (Guarantees DB is ready before request executes)
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+  } catch (err) {
+    console.error('Serverless DB connection middleware error:', err.message);
+  }
+  next();
+});
 
 // Route handlers
 const authRoutes = require('./routes/auth');
@@ -98,18 +107,32 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/staff', staffRoutes);
 app.use('/api/ai', aiRoutes);
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
+// Health check & Server Status endpoints (Awaits DB connection for serverless environments)
+app.get(['/', '/api/health', '/api/status', '/api/ping'], async (req, res) => {
+  try {
+    await connectDB();
+  } catch (e) {}
+
   const isConnected = mongoose.connection.readyState === 1;
+  const states = ['Disconnected', 'Connected', 'Connecting', 'Disconnecting'];
+  
   res.json({
-    status: isConnected ? 'OK' : 'DEGRADED',
-    app: 'Coaching Classes & Tuition Institute Multi-Tenant SaaS ERP API',
+    success: isConnected,
+    status: isConnected ? 'HEALTHY' : 'DEGRADED',
+    message: isConnected 
+      ? 'ClassTech Multi-Tenant Educational SaaS ERP Backend is running 🚀' 
+      : 'Server is running, connecting to MongoDB Atlas...',
     version: '2.0.0',
+    port: process.env.PORT || 5000,
+    uptimeSeconds: Math.floor(process.uptime()),
     timestamp: new Date().toISOString(),
     database: {
       state: isConnected ? 'Connected to MongoDB Atlas' : 'Connecting / Disconnected',
+      status: states[mongoose.connection.readyState] || 'Unknown',
       readyState: mongoose.connection.readyState,
-      host: mongoose.connection.host || 'Atlas Cluster'
+      connected: isConnected,
+      name: mongoose.connection.name || 'SchoolErp',
+      host: mongoose.connection.host || 'Atlas Cluster',
     }
   });
 });
@@ -123,29 +146,18 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Connect to MongoDB Atlas
-const mongoUri = process.env.MONGODB_URI;
-
-console.log('----------------------------------------------------');
-console.log('Connecting to MongoDB Atlas for Multi-Tenant ERP...');
-console.log('----------------------------------------------------');
-
-const connectWithRetry = () => {
-  mongoose.connect(mongoUri, {
-    serverSelectionTimeoutMS: 8000,
-  })
-  .then(() => {
-    console.log('✅ MongoDB Atlas connected successfully to database:', mongoose.connection.name || 'SchoolErp');
-  })
-  .catch((err) => {
-    console.error('⚠️ MongoDB Atlas connection notice:', err.message);
-  });
-};
-
-connectWithRetry();
-
-// Start the server
-const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => {
-  console.log(`🚀 Multi-Tenant SaaS ERP Server & Socket.IO active on port ${PORT}`);
+// Initial startup connection
+connectDB().catch((err) => {
+  console.error('Initial DB connect attempt notice:', err.message);
 });
+
+// Start the server if run directly (Node.js)
+const PORT = process.env.PORT || 5000;
+if (process.env.NODE_ENV !== 'test') {
+  server.listen(PORT, () => {
+    console.log(`🚀 Multi-Tenant SaaS ERP Server & Socket.IO active on port ${PORT}`);
+  });
+}
+
+// Export for Vercel Serverless Functions
+module.exports = app;
