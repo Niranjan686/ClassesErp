@@ -1,0 +1,93 @@
+body {
+    background-image: url('../images/LoginBg.jpg'); /* Replace with your image path */
+    background-size: cover;
+    background-position: center;
+    height: 100vh;
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+
+.login-container {
+    max-width: 400px;
+    margin: 100px auto;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    background: rgba(0, 0, 0, 0.7); /* Slightly darker for better readability */
+    color: white;
+    position: relative;
+}
+
+.login-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5); /* Add gradient overlay */
+    border-radius: 15px;
+    z-index: 0;
+}
+
+.login-container h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 24px;
+    z-index: 1; /* Ensure text is above overlay */
+    position: relative;
+}
+
+.login-container div {
+    margin-bottom: 15px;
+}
+
+.login-container label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.login-container input {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    font-size: 16px;
+    position: relative;
+    z-index: 1; /* Ensure input is above overlay */
+}
+
+.login-container input:focus {
+    outline: none;
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.7);
+}
+
+.login-container input:hover {
+    border: 1px solid rgba(255, 255, 255, 0.5); /* Add hover effect */
+}
+
+.login-container button {
+    width: 100%;
+    padding: 12px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+    position: relative;
+    z-index: 1; /* Ensure button is above overlay */
+}
+
+.login-container button:hover {
+    background-color: #218838;
+    transform: scale(1.05);
+}
+
+.login-container button:focus {
+    outline: none;
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.7); /* Add focus effect */
+}
