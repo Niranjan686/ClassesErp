@@ -81,13 +81,13 @@ router.get('/batch-roster', authenticateAdmin, async (req, res) => {
  */
 router.post('/quick-punch', authenticateAdmin, async (req, res) => {
   try {
-    const { identifier, date } = req.body;
-    if (!identifier) {
+    const { identifier, punchCode, date } = req.body;
+    const cleanId = (identifier || punchCode || '').trim();
+    if (!cleanId) {
       return res.status(400).json({ success: false, message: 'Student ID, RFID Tag, or GR No is required' });
     }
 
     const targetDate = date || new Date().toISOString().split('T')[0];
-    const cleanId = identifier.trim();
 
     const student = await Student.findOne({
       instituteId: req.instituteId,
@@ -222,7 +222,7 @@ router.post('/quick-punch', authenticateAdmin, async (req, res) => {
 /**
  * Broadcast SMS / WhatsApp alerts to parents of absent/late students
  */
-router.post('/broadcast-absent-sms', authenticateAdmin, async (req, res) => {
+router.post(['/broadcast-absent-sms', '/broadcast-absentee-sms'], authenticateAdmin, async (req, res) => {
   try {
     const { batchId, date, absentees } = req.body;
     const targetDate = date || new Date().toISOString().split('T')[0];
@@ -334,7 +334,7 @@ router.get('/monthly-matrix', authenticateAdmin, async (req, res) => {
 /**
  * Save / Update Attendance Sheet (Admin & Teacher)
  */
-router.post('/save', authenticateAdmin, async (req, res) => {
+router.post(['/save', '/mark-batch'], authenticateAdmin, async (req, res) => {
   try {
     const { batchId, courseId, date, records } = req.body;
 
@@ -380,6 +380,31 @@ router.post('/save', authenticateAdmin, async (req, res) => {
       },
       { upsert: true, new: true, runValidators: true }
     );
+
+    // Trigger instant push notifications for students marked Present
+    try {
+      const presentStudentIds = records.filter(r => r.status === 'Present').map(r => r.studentId);
+      if (presentStudentIds.length > 0) {
+        const presentStudents = await Student.find({ _id: { $in: presentStudentIds } });
+        const batchDoc = await Batch.findById(batchId);
+        const batchTitle = batchDoc?.batchName || 'Cohort';
+
+        for (const s of presentStudents) {
+          await sendPushNotification({
+            instituteId: req.instituteId,
+            studentId: s._id,
+            recipientName: `${s.fname} ${s.lname}`,
+            recipientPhone: s.mobileNo || s.fatherMobileNo,
+            title: '🎓 Attendance Verified: PRESENT ✅',
+            message: `Student ${s.fname} ${s.lname} marked PRESENT for today (${date}) in ${batchTitle}.`,
+            triggerEvent: 'Attendance_Present',
+            data: { studentId: s._id, status: 'Present', date, batchName: batchTitle }
+          });
+        }
+      }
+    } catch (notifErr) {
+      console.warn('Batch attendance push dispatch warning:', notifErr.message);
+    }
 
     // Broadcast attendance update via Socket.IO
     if (req.app.get('io')) {

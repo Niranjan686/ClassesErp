@@ -129,7 +129,7 @@ const AttendanceEntry = () => {
                 markedBy: 'Admin'
             };
 
-            await api.post('/attendance/mark-batch', payload);
+            await api.post('/attendance/save', payload);
             setIsAlreadyMarked(true);
             setToast({ open: true, message: 'Super attendance saved successfully!', severity: 'success' });
         } catch (err) {
@@ -143,9 +143,10 @@ const AttendanceEntry = () => {
     const handleBroadcastAbsenteeSMS = async () => {
         try {
             setSendingSms(true);
-            const res = await api.post('/attendance/broadcast-absentee-sms', {
+            const res = await api.post('/attendance/broadcast-absent-sms', {
                 batchId: selectedBatchId,
-                date: attendanceDate
+                date: attendanceDate,
+                absentees: roster.filter(r => r.status === 'Absent')
             });
 
             setToast({ open: true, message: res.data.message, severity: 'success' });
@@ -165,6 +166,7 @@ const AttendanceEntry = () => {
         try {
             setPunchLoading(true);
             const res = await api.post('/attendance/quick-punch', {
+                identifier: punchInput.trim(),
                 punchCode: punchInput.trim(),
                 date: attendanceDate,
                 inTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -205,44 +207,21 @@ const AttendanceEntry = () => {
     return (
         <AdminLayout>
             {/* Header */}
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} flexWrap="wrap" gap={2}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexWrap="wrap" gap={2}>
                 <Box>
                     <Typography variant="h5" fontWeight="900" color="#0f172a">
-                        Super Attendance Engine
+                        Batch Attendance Register
                     </Typography>
-                        <Typography variant="body2" color="textSecondary">
-                            Mark batch attendance, record QR/RFID punches, and dispatch parent absentee SMS alerts
-                        </Typography>
-                    </Box>
-
-                    {/* Mode Tabs */}
-                    <Paper sx={{ borderRadius: '10px', p: 0.5, border: '1px solid #e0f2fe', bgcolor: '#ffffff' }}>
-                        <Tabs
-                            value={activeMode}
-                            onChange={(e, val) => setActiveMode(val)}
-                            sx={{ minHeight: '36px', '& .Mui-selected': { color: '#0284c7', fontWeight: 800 } }}
-                        >
-                            <Tab
-                                icon={<FontAwesomeIcon icon={faCalendarCheck} style={{ marginRight: 6 }} />}
-                                iconPosition="start"
-                                label="Daily Batch Sheet"
-                                sx={{ minHeight: '36px', py: 0.5, px: 2, textTransform: 'none', fontWeight: 700 }}
-                            />
-                            <Tab
-                                icon={<FontAwesomeIcon icon={faQrcode} style={{ marginRight: 6 }} />}
-                                iconPosition="start"
-                                label="Rapid QR / RFID Punch"
-                                sx={{ minHeight: '36px', py: 0.5, px: 2, textTransform: 'none', fontWeight: 700 }}
-                            />
-                        </Tabs>
-                    </Paper>
+                    <Typography variant="body2" color="textSecondary">
+                        Mark batch attendance, manage student statuses, and dispatch parent absentee SMS alerts
+                    </Typography>
                 </Box>
+            </Box>
 
-                {/* MODE 0: BATCH-WISE ATTENDANCE SHEET */}
-                {activeMode === 0 && (
-                    <>
-                        {/* Selector Controls Bar */}
-                        <Paper sx={{ p: 2.5, mb: 3, borderRadius: '12px', border: '1px solid #e0f2fe' }}>
+            {/* BATCH-WISE ATTENDANCE SHEET */}
+            <>
+                {/* Selector Controls Bar */}
+                <Paper sx={{ p: 2.5, mb: 3, borderRadius: '12px', border: '1px solid #e0f2fe' }}>
                             <Grid container spacing={2} alignItems="center">
                                 <Grid item xs={12} sm={6} md={4}>
                                     <TextField
@@ -473,121 +452,6 @@ const AttendanceEntry = () => {
                             </Paper>
                         )}
                     </>
-                )}
-
-                {/* MODE 1: RAPID QR / RFID PUNCH */}
-                {activeMode === 1 && (
-                    <Grid container spacing={3}>
-                        <Grid item xs={12} md={5}>
-                            <Paper sx={{ p: 3, borderRadius: '14px', border: '1px solid #e0f2fe', bgcolor: '#ffffff', mb: 3 }}>
-                                <Box display="flex" alignItems="center" gap={1.5} mb={2}>
-                                    <Box sx={{ width: 40, height: 40, borderRadius: '8px', bgcolor: '#e0f2fe', color: '#0284c7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                        <FontAwesomeIcon icon={faBolt} size="lg" />
-                                    </Box>
-                                    <Box>
-                                        <Typography variant="h6" fontWeight="900" color="#0f172a">
-                                            Super Punch Scanner
-                                        </Typography>
-                                        <Typography variant="caption" color="textSecondary">
-                                            Rapid scan RFID card, QR payload, or enter Student Roll No
-                                        </Typography>
-                                    </Box>
-                                </Box>
-
-                                <form onSubmit={handleQuickPunch}>
-                                    <TextField
-                                        inputRef={punchInputRef}
-                                        fullWidth
-                                        autoFocus
-                                        label="Scan Card ID or Enter Roll / GR No"
-                                        value={punchInput}
-                                        onChange={(e) => setPunchInput(e.target.value)}
-                                        placeholder="e.g. RFID-1001 or 1 or KCC-2024-0001"
-                                        disabled={punchLoading}
-                                        sx={{ mb: 2 }}
-                                        InputProps={{
-                                            startAdornment: <FontAwesomeIcon icon={faQrcode} style={{ color: '#0284c7', marginRight: 10 }} />
-                                        }}
-                                    />
-                                    <Button
-                                        type="submit"
-                                        variant="contained"
-                                        fullWidth
-                                        disabled={punchLoading || !punchInput.trim()}
-                                        sx={{
-                                            backgroundColor: '#0284c7',
-                                            '&:hover': { backgroundColor: '#0369a1' },
-                                            py: 1.2,
-                                            fontWeight: 800,
-                                            textTransform: 'none'
-                                        }}
-                                    >
-                                        {punchLoading ? 'Punching...' : 'Punch Attendance (Enter ↵)'}
-                                    </Button>
-                                </form>
-                            </Paper>
-
-                            {lastPunchedStudent && (
-                                <Paper sx={{ p: 3, borderRadius: '14px', border: '2px solid #10b981', bgcolor: '#f0fdf4', textAlign: 'center' }}>
-                                    <Avatar sx={{ width: 50, height: 50, bgcolor: '#10b981', margin: '0 auto 10px' }}>
-                                        <FontAwesomeIcon icon={faCheck} size="lg" />
-                                    </Avatar>
-                                    <Typography variant="h6" fontWeight="900" color="#166534">
-                                        Attendance Marked Present!
-                                    </Typography>
-                                    <Typography variant="h6" fontWeight="800" color="#0f172a" mt={0.5}>
-                                        {lastPunchedStudent.fullName}
-                                    </Typography>
-                                    <Typography variant="caption" color="textSecondary" display="block">
-                                        {lastPunchedStudent.course} • {lastPunchedStudent.batch}
-                                    </Typography>
-                                    <Typography variant="caption" sx={{ color: '#0369a1', fontWeight: 700, mt: 0.5, display: 'block' }}>
-                                        Punch Time: {lastPunchedStudent.punchTime}
-                                    </Typography>
-                                </Paper>
-                            )}
-                        </Grid>
-
-                        <Grid item xs={12} md={7}>
-                            <Paper sx={{ p: 3, borderRadius: '14px', border: '1px solid #e0f2fe' }}>
-                                <Typography variant="h6" fontWeight="900" color="#0f172a" mb={2}>
-                                    Live Session Punch History
-                                </Typography>
-
-                                {punchHistory.length === 0 ? (
-                                    <Typography color="textSecondary" sx={{ py: 6, textAlign: 'center' }}>
-                                        No punches in this session yet.
-                                    </Typography>
-                                ) : (
-                                    <TableContainer>
-                                        <Table size="small">
-                                            <TableHead sx={{ backgroundColor: '#f0f9ff' }}>
-                                                <TableRow>
-                                                    <TableCell sx={{ fontWeight: 800 }}>Time</TableCell>
-                                                    <TableCell sx={{ fontWeight: 800 }}>Student Name</TableCell>
-                                                    <TableCell sx={{ fontWeight: 800 }}>Batch</TableCell>
-                                                    <TableCell sx={{ fontWeight: 800 }}>Status</TableCell>
-                                                </TableRow>
-                                            </TableHead>
-                                            <TableBody>
-                                                {punchHistory.map((item, idx) => (
-                                                    <TableRow key={idx} hover>
-                                                        <TableCell sx={{ fontWeight: 800, color: '#0284c7' }}>{item.timestamp}</TableCell>
-                                                        <TableCell sx={{ fontWeight: 700 }}>{item.fullName} ({item.grno})</TableCell>
-                                                        <TableCell>{item.batch}</TableCell>
-                                                        <TableCell>
-                                                            <Chip label="Present" size="small" sx={{ bgcolor: '#dcfce7', color: '#166534', fontWeight: 800 }} />
-                                                        </TableCell>
-                                                    </TableRow>
-                                                ))}
-                                            </TableBody>
-                                        </Table>
-                                    </TableContainer>
-                                )}
-                            </Paper>
-                        </Grid>
-                    </Grid>
-                )}
 
                 {/* Absentee SMS Broadcast Dialog */}
                 <Dialog open={openSmsModal} onClose={() => setOpenSmsModal(false)} maxWidth="xs" fullWidth>

@@ -344,11 +344,11 @@ const Sidebar = ({ mobileOpen, onToggleSidebar }) => {
                         mb: 0.5,
                         py: 0.9,
                         px: 1.5,
-                        color: (location.pathname === '/attendance-entry' || location.pathname === '/attendance-monthly') ? '#2563eb' : '#475569',
+                        color: (location.pathname === '/attendance-entry' || location.pathname === '/attendance-monthly' || location.pathname === '/reports') ? '#2563eb' : '#475569',
                         '&:hover': { bgcolor: '#f8fafc', color: '#0f172a' }
                     }}
                 >
-                    <ListItemIcon sx={{ minWidth: 32, color: (location.pathname === '/attendance-entry' || location.pathname === '/attendance-monthly') ? '#2563eb' : '#64748b' }}>
+                    <ListItemIcon sx={{ minWidth: 32, color: (location.pathname === '/attendance-entry' || location.pathname === '/attendance-monthly' || location.pathname === '/reports') ? '#2563eb' : '#64748b' }}>
                         <FontAwesomeIcon icon={faShieldHalved} />
                     </ListItemIcon>
                     <ListItemText primary="Attendance & Class" primaryTypographyProps={{ fontSize: '13px', fontWeight: 700 }} />
@@ -368,7 +368,7 @@ const Sidebar = ({ mobileOpen, onToggleSidebar }) => {
                                 '&:hover': { color: '#0f172a', bgcolor: '#f8fafc' }
                             }}
                         >
-                            <ListItemText primary="• RFID Attendance Scanner" primaryTypographyProps={{ fontSize: '12.5px', fontWeight: isPathActive('/attendance-entry') ? 700 : 500 }} />
+                            <ListItemText primary="• Daily Attendance Sheet" primaryTypographyProps={{ fontSize: '12.5px', fontWeight: isPathActive('/attendance-entry') ? 700 : 500 }} />
                         </ListItemButton>
                         <ListItemButton
                             component={Link}
@@ -383,6 +383,20 @@ const Sidebar = ({ mobileOpen, onToggleSidebar }) => {
                             }}
                         >
                             <ListItemText primary="• Monthly Matrix Grid" primaryTypographyProps={{ fontSize: '12.5px', fontWeight: isPathActive('/attendance-monthly') ? 700 : 500 }} />
+                        </ListItemButton>
+                        <ListItemButton
+                            component={Link}
+                            to="/reports"
+                            onClick={() => isMobile && onToggleSidebar && onToggleSidebar()}
+                            sx={{
+                                py: 0.6,
+                                borderRadius: '8px',
+                                color: isPathActive('/reports') ? '#2563eb' : '#64748b',
+                                bgcolor: isPathActive('/reports') ? '#eff6ff' : 'transparent',
+                                '&:hover': { color: '#0f172a', bgcolor: '#f8fafc' }
+                            }}
+                        >
+                            <ListItemText primary="• Attendance Reports & Defaulters" primaryTypographyProps={{ fontSize: '12.5px', fontWeight: isPathActive('/reports') ? 700 : 500 }} />
                         </ListItemButton>
                     </List>
                 </Collapse>
@@ -545,7 +559,30 @@ const Sidebar = ({ mobileOpen, onToggleSidebar }) => {
                     </List>
                 </Collapse>
 
-                {/* 9. Super Admin Settings */}
+                {/* 9. Reports & Analytics */}
+                <ListItemButton
+                    component={Link}
+                    to="/reports"
+                    onClick={() => isMobile && onToggleSidebar && onToggleSidebar()}
+                    sx={{
+                        borderRadius: '10px',
+                        mb: 0.5,
+                        py: 0.9,
+                        px: 1.5,
+                        color: isPathActive('/reports') ? '#2563eb' : '#475569',
+                        bgcolor: isPathActive('/reports') ? '#eff6ff' : 'transparent',
+                        border: isPathActive('/reports') ? '1px solid #bfdbfe' : '1px solid transparent',
+                        '&:hover': { bgcolor: isPathActive('/reports') ? '#eff6ff' : '#f8fafc', color: '#0f172a' }
+                    }}
+                >
+                    <ListItemIcon sx={{ minWidth: 32, color: isPathActive('/reports') ? '#2563eb' : '#64748b' }}>
+                        <FontAwesomeIcon icon={faFileLines} />
+                    </ListItemIcon>
+                    <ListItemText primary="Reports & Analytics" primaryTypographyProps={{ fontSize: '13px', fontWeight: isPathActive('/reports') ? 800 : 700 }} />
+                    <FontAwesomeIcon icon={faChevronRight} style={{ fontSize: '10px', color: '#94a3b8' }} />
+                </ListItemButton>
+
+                {/* 10. Super Admin Settings */}
                 <ListItemButton
                     component={Link}
                     to="/super-admin"
