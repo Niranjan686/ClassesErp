@@ -8,6 +8,8 @@ import {
     faFileLines, faPrint, faFileCsv, faTriangleExclamation, faUsers, faMoneyBillWave, faCalendarCheck
 } from '@fortawesome/free-solid-svg-icons';
 import AdminLayout from '../Common/AdminLayout';
+import { PageTransition } from '../Common/MotionWrapper';
+import { ClassTechLoader } from '../Common/ClassTechLoader';
 import api from '../../api';
 
 const Reports = () => {
@@ -96,6 +98,7 @@ const Reports = () => {
 
     return (
         <AdminLayout>
+            <PageTransition>
             {/* Header */}
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexWrap="wrap" gap={2}>
                 <Box>
@@ -353,6 +356,7 @@ const Reports = () => {
                         {toast.message}
                     </Alert>
                 </Snackbar>
+            </PageTransition>
         </AdminLayout>
     );
 };

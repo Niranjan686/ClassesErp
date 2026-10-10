@@ -5,26 +5,19 @@
 @tailwind utilities;
 
 :root {
-  --brand-primary: #2563eb;
-  --brand-secondary: #7c3aed;
-  --brand-accent: #06b6d4;
-  --primary-blue: #2563eb;
-  --primary-light: #f0f9ff;
-  --dark-slate: #0f172a;
-  --card-bg: #ffffff;
-  --border-color: #e2e8f0;
-  --bg-main: #f8fafc;
-  --text-main: #0f172a;
-  --text-muted: #64748b;
-}
-
-.dark {
-  --brand-primary: #3b82f6;
-  --card-bg: #1e293b;
-  --border-color: #334155;
-  --bg-main: #0b1120;
-  --text-main: #f8fafc;
-  --text-muted: #94a3b8;
+  --brand-primary: #4338CA;
+  --brand-secondary: #60A5FA;
+  --brand-accent: #38BDF8;
+  --primary-blue: #4338CA;
+  --primary-light: #EEF2FF;
+  --dark-slate: #172033;
+  --card-bg: #FFFFFF;
+  --border-color: #E8EDF4;
+  --bg-main: #F8FAFC;
+  --text-main: #172033;
+  --text-muted: #64748B;
+  --success: #10B981;
+  --warning: #F59E0B;
 }
 
 * {
@@ -48,192 +41,254 @@ html, body {
   overflow: visible !important;
 }
 
-/* Custom modern scrollbars */
+/* Custom Minimalist Scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #e2e8f0;
+  background: #F8FAFC;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
+  background: #CBD5E1;
+  border-radius: 6px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #94A3B8;
 }
 
-/* Glassmorphism utility */
-.glass-card {
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(226, 232, 240, 0.8);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+/* ─── CLASSTECH.IN ANIMATION & BACKGROUND SYSTEM ─── */
+
+/* 1. Subtle Dot & Grid Pattern Backgrounds */
+.bg-dot-pattern {
+  background-image: radial-gradient(rgba(67, 56, 202, 0.07) 1.2px, transparent 1.2px);
+  background-size: 24px 24px;
 }
 
-.dark .glass-card {
-  background: rgba(30, 41, 59, 0.88);
-  border-color: rgba(51, 65, 85, 0.8);
+.bg-grid-pattern {
+  background-size: 40px 40px;
+  background-image: 
+    linear-gradient(to right, rgba(232, 237, 244, 0.6) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(232, 237, 244, 0.6) 1px, transparent 1px);
 }
 
-/* Pulse animation for Live Indicator */
-@keyframes livePulseGlow {
-  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-  70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
-  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+/* 2. Drifting Ambient Blobs (from classtech.in) */
+@keyframes blobDrift {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(40px, -60px) scale(1.15);
+  }
+  66% {
+    transform: translate(-30px, 30px) scale(0.9);
+  }
 }
 
-.live-pulse {
-  animation: livePulseGlow 2s infinite;
+.animate-blob {
+  animation: blobDrift 18s infinite ease-in-out;
 }
 
-@keyframes greenPulseGlow {
-  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-  70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
-  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+.animation-delay-2000 {
+  animation-delay: 2s;
 }
 
-.online-pulse {
-  animation: greenPulseGlow 2s infinite;
+.animation-delay-4000 {
+  animation-delay: 4s;
 }
 
-/* Clean Card Shadows & Transitions */
-.erp-card {
-  background-color: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 14px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+.animation-delay-6000 {
+  animation-delay: 6s;
 }
 
-.erp-card:hover {
-  border-color: #cbd5e1;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.06);
+/* 3. Layered Flowing Waves (from classtech.in) */
+@keyframes waveFlowLeft {
+  0% { transform: translateX(0) scaleY(1); }
+  50% { transform: translateX(-15%) scaleY(1.05); }
+  100% { transform: translateX(-30%) scaleY(0.96); }
 }
 
-/* Watermark styles for PDF and doc preview */
-.watermark-overlay {
+@keyframes waveFlowRight {
+  0% { transform: translateX(-30%) scaleY(0.96); }
+  50% { transform: translateX(-15%) scaleY(1.05); }
+  100% { transform: translateX(0) scaleY(1); }
+}
+
+.animate-wave-slow {
+  animation: waveFlowLeft 20s ease-in-out infinite alternate;
+}
+
+.animate-wave-medium {
+  animation: waveFlowRight 15s ease-in-out infinite alternate;
+}
+
+.animate-wave-fast {
+  animation: waveFlowLeft 10s ease-in-out infinite alternate;
+}
+
+/* 4. Glossy Sheen Sweep & Shimmer Effects */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.animate-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.animate-shimmer::after {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  pointer-events: none;
-  background-image: repeating-linear-gradient(
-    -45deg,
-    rgba(148, 163, 184, 0.07),
-    rgba(148, 163, 184, 0.07) 100px,
-    transparent 100px,
-    transparent 200px
+  top: 0; right: 0; bottom: 0; left: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0,
+    rgba(255, 255, 255, 0.5) 20%,
+    rgba(255, 255, 255, 0.8) 60%,
+    rgba(255, 255, 255, 0)
   );
-  z-index: 10;
+  animation: shimmer 1.8s infinite;
+  content: '';
 }
 
-/* =========================================================
-   3D PERSPECTIVE & ADVANCED CARD ANIMATIONS
-   ========================================================= */
-.perspective-1000 {
-  perspective: 1000px;
+@keyframes sheenSweep {
+  0% { transform: translateX(-150%) skewX(-20deg); }
+  100% { transform: translateX(250%) skewX(-20deg); }
 }
 
-.perspective-1200 {
-  perspective: 1200px;
+.hover-sheen {
+  position: relative;
+  overflow: hidden;
 }
 
-.transform-style-3d {
-  transform-style: preserve-3d;
+.hover-sheen::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    60deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.35) 50%,
+    transparent 65%
+  );
+  transform: translateX(-150%) skewX(-20deg);
+  pointer-events: none;
 }
 
-.backface-hidden {
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
+.hover-sheen:hover::after {
+  animation: sheenSweep 1.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.rotate-y-180 {
-  transform: rotateY(180deg);
+/* 5. Smooth Tech Reveal Transitions */
+@keyframes techRevealSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(30px) scale(0.97);
+    filter: blur(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
 }
 
-/* 3D Floating Mesh Orb Animation */
+.animate-tech-reveal {
+  animation: techRevealSlideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* 6. Floating Elements */
 @keyframes floatSlow {
-  0%, 100% {
-    transform: translateY(0px) rotate(0deg) scale(1);
-  }
-  50% {
-    transform: translateY(-18px) rotate(6deg) scale(1.05);
-  }
+  0%, 100% { transform: translateY(0px) rotate(-3deg); }
+  50% { transform: translateY(-10px) rotate(2deg); }
 }
 
-@keyframes floatReverse {
-  0%, 100% {
-    transform: translateY(0px) rotate(0deg) scale(1);
-  }
-  50% {
-    transform: translateY(18px) rotate(-6deg) scale(0.96);
-  }
+@keyframes floatMedium {
+  0%, 100% { transform: translateY(0px) rotate(4deg); }
+  50% { transform: translateY(-14px) rotate(-3deg); }
+}
+
+@keyframes floatFast {
+  0%, 100% { transform: translateY(0px) rotate(2deg); }
+  50% { transform: translateY(-8px) rotate(-2deg); }
 }
 
 .animate-float-slow {
-  animation: floatSlow 8s ease-in-out infinite;
+  animation: floatSlow 6s ease-in-out infinite;
 }
 
-.animate-float-reverse {
-  animation: floatReverse 10s ease-in-out infinite;
+.animate-float-medium {
+  animation: floatMedium 4.5s ease-in-out infinite;
 }
 
-/* 3D Holographic Shimmer Effect */
-@keyframes holoShimmer {
-  0% {
-    background-position: -200% 0;
+.animate-float-fast {
+  animation: floatFast 3.5s ease-in-out infinite;
+}
+
+/* 7. Live Pulse Glows */
+@keyframes syncPulseGlow {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6); }
+  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.live-sync-pulse {
+  animation: syncPulseGlow 2.4s infinite;
+}
+
+/* 8. Glassmorphism Card System */
+.classtech-glass-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(232, 237, 244, 0.8);
+  border-radius: 20px;
+  box-shadow: 0 10px 30px -10px rgba(23, 32, 51, 0.06);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.classtech-glass-card:hover {
+  border-color: rgba(99, 102, 241, 0.4);
+  box-shadow: 0 20px 40px -15px rgba(67, 56, 202, 0.12);
+  transform: translateY(-3px);
+}
+
+.classtech-card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  box-shadow: 0 1px 3px 0 rgba(23, 32, 51, 0.04), 0 1px 2px -1px rgba(23, 32, 51, 0.02);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.classtech-card:hover {
+  border-color: #CBD5E1;
+  box-shadow: 0 8px 24px -4px rgba(23, 32, 51, 0.06);
+  transform: translateY(-2px);
+}
+
+/* Interactive Button Tactile Response */
+.btn-tactile {
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-tactile:active {
+  transform: scale(0.98);
+}
+
+/* Prefers-reduced-motion accessibility rules */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
-  100% {
-    background-position: 200% 0;
-  }
 }
-
-.holo-gradient {
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.15) 0%,
-    rgba(99, 102, 241, 0.25) 25%,
-    rgba(236, 72, 153, 0.25) 50%,
-    rgba(59, 130, 246, 0.25) 75%,
-    rgba(255, 255, 255, 0.15) 100%
-  );
-  background-size: 200% 200%;
-  animation: holoShimmer 6s linear infinite;
-}
-
-/* 3D Card Hover Lift & Depth Shadows */
-.card-3d-lift {
-  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.35s ease;
-}
-
-.card-3d-lift:hover {
-  transform: translateY(-6px) scale(1.015);
-  box-shadow: 0 20px 35px -10px rgba(15, 23, 42, 0.12), 0 0 20px 2px rgba(59, 130, 246, 0.15);
-}
-
-/* Print Styles */
-@media print {
-  body {
-    background-color: #ffffff !important;
-  }
-  header, nav, .MuiDrawer-root, button, .no-print {
-    display: none !important;
-  }
-  main {
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 100% !important;
-  }
-  .MuiPaper-root {
-    box-shadow: none !important;
-    border: none !important;
-  }
-}
-

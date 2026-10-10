@@ -1,5 +1,7 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
+import LandingPage from './components/Landing/LandingPage';
 import Login from './components/Login';
 import StudentLogin from './components/Auth/StudentLogin';
 import PublicEnquiryForm from './components/Auth/PublicEnquiryForm';
@@ -25,46 +27,53 @@ import NotesMaster from './components/Notes/NotesMaster';
 import DemoScheduler from './components/Demos/DemoScheduler';
 
 const AppRoutes = () => {
+  const location = useLocation();
+
   return (
-    <Routes>
-      {/* Auth Routes */}
-      <Route path="/login" element={<Login />} />
-      <Route path="/admin/login" element={<Login />} />
-      <Route path="/enquiry/:instituteCode" element={<PublicEnquiryForm />} />
-      <Route path="/public/enquiry/:instituteCode" element={<PublicEnquiryForm />} />
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        {/* Public Landing & Marketing */}
+        <Route path="/" element={<LandingPage />} />
 
-      {/* Student Mobile App (Mobile Number + OTP Login) */}
-      <Route path="/app" element={<StudentMobileApp />} />
-      <Route path="/student-app" element={<StudentMobileApp />} />
-      <Route path="/mobile" element={<StudentMobileApp />} />
-      <Route path="/student/login" element={<StudentMobileApp />} />
-      <Route path="/student-portal" element={<ConsumerStudentPortal />} />
-      <Route path="/student/*" element={<ConsumerStudentPortal />} />
+        {/* Auth Routes */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/admin/login" element={<Login />} />
+        <Route path="/enquiry/:instituteCode" element={<PublicEnquiryForm />} />
+        <Route path="/public/enquiry/:instituteCode" element={<PublicEnquiryForm />} />
 
-      {/* Admin Operations & Live Modules */}
-      <Route path="/dashboard" element={<Dashboard />} />
-      <Route path="/super-admin" element={<SuperAdminDashboard />} />
-      <Route path="/superadmin" element={<SuperAdminDashboard />} />
-      <Route path="/live-classes" element={<LiveClassStudio />} />
-      <Route path="/study-notes" element={<NotesMaster />} />
-      <Route path="/demo-schedule" element={<DemoScheduler />} />
-      <Route path="/students" element={<StudentList />} />
-      <Route path="/student-master" element={<StudentMaster />} />
-      <Route path="/batch-master" element={<BatchMaster />} />
-      <Route path="/course-master" element={<CourseMaster />} />
-      <Route path="/staff-master" element={<StaffMaster />} />
-      <Route path="/fee-management" element={<FeeManagement />} />
-      <Route path="/attendance-entry" element={<AttendanceEntry />} />
-      <Route path="/attendance-monthly" element={<MonthlyAttendance />} />
-      <Route path="/marks-entry" element={<MarksEntry />} />
-      <Route path="/leave-management" element={<LeaveManagement />} />
-      <Route path="/complaints" element={<ComplaintManagement />} />
-      <Route path="/enquiries" element={<EnquiryManagement />} />
-      <Route path="/reports" element={<Reports />} />
+        {/* Student Mobile App (Mobile Number + OTP Login) */}
+        <Route path="/app" element={<StudentMobileApp />} />
+        <Route path="/student-app" element={<StudentMobileApp />} />
+        <Route path="/mobile" element={<StudentMobileApp />} />
+        <Route path="/student/login" element={<StudentMobileApp />} />
+        <Route path="/student-portal" element={<ConsumerStudentPortal />} />
+        <Route path="/student/*" element={<ConsumerStudentPortal />} />
 
-      {/* Default redirect */}
-      <Route path="*" element={<Navigate to="/login" replace />} />
-    </Routes>
+        {/* Admin Operations & Live Modules */}
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/super-admin" element={<SuperAdminDashboard />} />
+        <Route path="/superadmin" element={<SuperAdminDashboard />} />
+        <Route path="/live-classes" element={<LiveClassStudio />} />
+        <Route path="/study-notes" element={<NotesMaster />} />
+        <Route path="/demo-schedule" element={<DemoScheduler />} />
+        <Route path="/students" element={<StudentList />} />
+        <Route path="/student-master" element={<StudentMaster />} />
+        <Route path="/batch-master" element={<BatchMaster />} />
+        <Route path="/course-master" element={<CourseMaster />} />
+        <Route path="/staff-master" element={<StaffMaster />} />
+        <Route path="/fee-management" element={<FeeManagement />} />
+        <Route path="/attendance-entry" element={<AttendanceEntry />} />
+        <Route path="/attendance-monthly" element={<MonthlyAttendance />} />
+        <Route path="/marks-entry" element={<MarksEntry />} />
+        <Route path="/leave-management" element={<LeaveManagement />} />
+        <Route path="/complaints" element={<ComplaintManagement />} />
+        <Route path="/enquiries" element={<EnquiryManagement />} />
+        <Route path="/reports" element={<Reports />} />
+
+        {/* Default redirect */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </AnimatePresence>
   );
 };
 

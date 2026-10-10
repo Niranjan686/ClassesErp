@@ -1,499 +1,383 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-    Box, Typography, Button, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-    TextField, MenuItem, Chip, IconButton, Grid, CircularProgress, Alert, Snackbar, Avatar,
-    Tabs, Tab, Card, CardContent, Divider, Tooltip, Dialog, DialogTitle, DialogContent, DialogActions
-} from '@mui/material';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-    faCalendarCheck, faQrcode, faCheck, faTimes, faClock, faUserCheck,
-    faFloppyDisk, faRotateRight, faBolt, faCircleCheck, faTowerBroadcast, faPaperPlane
-} from '@fortawesome/free-solid-svg-icons';
+  CalendarCheck, Check, X as CloseIcon, Clock, Save,
+  RefreshCw, Send, CheckCircle2, UserCheck, AlertCircle,
+  Users, Smartphone, Calendar, Layers, ShieldCheck
+} from 'lucide-react';
 import AdminLayout from '../Common/AdminLayout';
+import { PageTransition, StaggerContainer, StaggerItem, SuccessModal, triggerAcademicConfetti } from '../Common/MotionWrapper';
+import { ClassTechLoader } from '../Common/ClassTechLoader';
+import { EmptyStateIllustration } from '../Common/EducationalSVGs';
 import api from '../../api';
 
 const AttendanceEntry = () => {
-    const location = useLocation();
-    const [activeMode, setActiveMode] = useState(0); // 0: Batch Sheet, 1: Quick RFID Punch
+  const location = useLocation();
 
-    // Batches & Selected state
-    const [batches, setBatches] = useState([]);
-    const [selectedBatchId, setSelectedBatchId] = useState('');
-    const [attendanceDate, setAttendanceDate] = useState(new Date().toISOString().split('T')[0]);
+  // State
+  const [batches, setBatches] = useState([]);
+  const [selectedBatchId, setSelectedBatchId] = useState('');
+  const [attendanceDate, setAttendanceDate] = useState(new Date().toISOString().split('T')[0]);
+  const [roster, setRoster] = useState([]);
+  const [batchDetails, setBatchDetails] = useState(null);
+  const [isAlreadyMarked, setIsAlreadyMarked] = useState(false);
+  const [loadingRoster, setLoadingRoster] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-    // Roster & Sheet state
-    const [roster, setRoster] = useState([]);
-    const [batchDetails, setBatchDetails] = useState(null);
-    const [isAlreadyMarked, setIsAlreadyMarked] = useState(false);
-    const [loadingRoster, setLoadingRoster] = useState(false);
-    const [saving, setSaving] = useState(false);
+  // Success Modal State
+  const [successModal, setSuccessModal] = useState({ open: false, title: '', message: '' });
+  const [toast, setToast] = useState({ open: false, message: '', type: 'success' });
 
-    // Quick Punch state
-    const [punchInput, setPunchInput] = useState('');
-    const [punchLoading, setPunchLoading] = useState(false);
-    const [lastPunchedStudent, setLastPunchedStudent] = useState(null);
-    const [punchHistory, setPunchHistory] = useState([]);
-    const punchInputRef = useRef(null);
+  // 1. Fetch Batches on mount
+  useEffect(() => {
+    const fetchBatches = async () => {
+      try {
+        const res = await api.get('/batches/active');
+        const list = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+        setBatches(list);
 
-    // Absentee Broadcast SMS State
-    const [openSmsModal, setOpenSmsModal] = useState(false);
-    const [sendingSms, setSendingSms] = useState(false);
+        const searchParams = new URLSearchParams(location.search);
+        const queryBatchId = searchParams.get('batchId');
 
-    // Toast
-    const [toast, setToast] = useState({ open: false, message: '', severity: 'success' });
-
-    // 1. Fetch Batches on mount
-    useEffect(() => {
-        const fetchBatches = async () => {
-            try {
-                const res = await api.get('/batches/active');
-                const list = Array.isArray(res.data) ? res.data : (res.data?.data || []);
-                setBatches(list);
-
-                const searchParams = new URLSearchParams(location.search);
-                const queryBatchId = searchParams.get('batchId');
-
-                if (queryBatchId && list.some(b => b._id === queryBatchId)) {
-                    setSelectedBatchId(queryBatchId);
-                } else if (list.length > 0) {
-                    setSelectedBatchId(list[0]._id);
-                }
-            } catch (err) {
-                setToast({ open: true, message: 'Failed to load batches', severity: 'error' });
-            }
-        };
-        fetchBatches();
-    }, [location.search]);
-
-    // 2. Fetch Roster
-    const fetchRoster = async () => {
-        if (!selectedBatchId) return;
-        try {
-            setLoadingRoster(true);
-            const res = await api.get(`/attendance/batch-roster?batchId=${selectedBatchId}&date=${attendanceDate}`);
-            setBatchDetails(res.data.batch);
-            setIsAlreadyMarked(res.data.isAlreadyMarked);
-            setRoster(res.data.roster);
-        } catch (err) {
-            setToast({ open: true, message: 'Failed to load batch student roster', severity: 'error' });
-        } finally {
-            setLoadingRoster(false);
+        if (queryBatchId && list.some((b) => b._id === queryBatchId)) {
+          setSelectedBatchId(queryBatchId);
+        } else if (list.length > 0) {
+          setSelectedBatchId(list[0]._id);
         }
+      } catch (err) {
+        setToast({ open: true, message: 'Failed to load active classroom batches', type: 'error' });
+      }
     };
+    fetchBatches();
+  }, [location.search]);
 
-    useEffect(() => {
-        if (selectedBatchId) {
-            fetchRoster();
-        }
-    }, [selectedBatchId, attendanceDate]);
+  // 2. Fetch Batch Roster
+  const fetchRoster = async () => {
+    if (!selectedBatchId) return;
+    try {
+      setLoadingRoster(true);
+      const res = await api.get(`/attendance/batch-roster?batchId=${selectedBatchId}&date=${attendanceDate}`);
+      setBatchDetails(res.data.batch);
+      setIsAlreadyMarked(res.data.isAlreadyMarked);
+      setRoster(res.data.roster || []);
+    } catch (err) {
+      setToast({ open: true, message: 'Failed to load batch student roster', type: 'error' });
+    } finally {
+      setLoadingRoster(false);
+    }
+  };
 
-    const handleStatusChange = (studentId, newStatus) => {
-        const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        setRoster(prev => prev.map(item => {
-            if (item.studentId === studentId) {
-                return {
-                    ...item,
-                    status: newStatus,
-                    inTime: (newStatus === 'Present' || newStatus === 'Late') && !item.inTime ? nowTime : item.inTime
-                };
-            }
-            return item;
-        }));
-    };
+  useEffect(() => {
+    if (selectedBatchId) {
+      fetchRoster();
+    }
+  }, [selectedBatchId, attendanceDate]);
 
-    const handleMarkAll = (status) => {
-        const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        setRoster(prev => prev.map(item => ({
+  // Handle Individual Status Toggle
+  const handleStatusChange = (studentId, newStatus) => {
+    const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    setRoster((prev) =>
+      prev.map((item) => {
+        if (item.studentId === studentId) {
+          return {
             ...item,
-            status,
-            inTime: status === 'Present' ? nowTime : ''
-        })));
-    };
-
-    // Save Batch Attendance
-    const handleSaveBatchAttendance = async () => {
-        if (!selectedBatchId || roster.length === 0) return;
-        try {
-            setSaving(true);
-            const payload = {
-                batchId: selectedBatchId,
-                courseId: batchDetails?.courseId?._id || batchDetails?.courseId,
-                date: attendanceDate,
-                records: roster.map(r => ({
-                    studentId: r.studentId,
-                    status: r.status,
-                    inTime: r.inTime,
-                    remarks: r.remarks
-                })),
-                markedBy: 'Admin'
-            };
-
-            await api.post('/attendance/save', payload);
-            setIsAlreadyMarked(true);
-            setToast({ open: true, message: 'Super attendance saved successfully!', severity: 'success' });
-        } catch (err) {
-            setToast({ open: true, message: 'Failed to save attendance', severity: 'error' });
-        } finally {
-            setSaving(false);
+            status: newStatus,
+            inTime: (newStatus === 'Present' || newStatus === 'Late') && !item.inTime ? nowTime : item.inTime,
+          };
         }
-    };
-
-    // Broadcast SMS to Parents of Absent Students
-    const handleBroadcastAbsenteeSMS = async () => {
-        try {
-            setSendingSms(true);
-            const res = await api.post('/attendance/broadcast-absent-sms', {
-                batchId: selectedBatchId,
-                date: attendanceDate,
-                absentees: roster.filter(r => r.status === 'Absent')
-            });
-
-            setToast({ open: true, message: res.data.message, severity: 'success' });
-            setOpenSmsModal(false);
-        } catch (err) {
-            setToast({ open: true, message: 'Failed to send parent absentee SMS', severity: 'error' });
-        } finally {
-            setSendingSms(false);
-        }
-    };
-
-    // Quick Punch In
-    const handleQuickPunch = async (e) => {
-        e.preventDefault();
-        if (!punchInput.trim()) return;
-
-        try {
-            setPunchLoading(true);
-            const res = await api.post('/attendance/quick-punch', {
-                identifier: punchInput.trim(),
-                punchCode: punchInput.trim(),
-                date: attendanceDate,
-                inTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            });
-
-            setLastPunchedStudent(res.data.student);
-            setPunchHistory(prev => [
-                {
-                    ...res.data.student,
-                    timestamp: new Date().toLocaleTimeString(),
-                    status: 'Present'
-                },
-                ...prev.slice(0, 15)
-            ]);
-
-            setPunchInput('');
-            setToast({ open: true, message: res.data.message, severity: 'success' });
-            if (selectedBatchId) fetchRoster();
-        } catch (err) {
-            setToast({
-                open: true,
-                message: err.response?.data?.message || 'Student not found or punch failed',
-                severity: 'error'
-            });
-        } finally {
-            setPunchLoading(false);
-            if (punchInputRef.current) punchInputRef.current.focus();
-        }
-    };
-
-    const presentCount = roster.filter(r => r.status === 'Present').length;
-    const absentCount = roster.filter(r => r.status === 'Absent').length;
-    const lateCount = roster.filter(r => r.status === 'Late').length;
-    const leaveCount = roster.filter(r => r.status === 'Leave').length;
-    const totalCount = roster.length;
-    const attendancePercentage = totalCount > 0 ? Math.round(((presentCount + lateCount) / totalCount) * 100) : 0;
-
-    return (
-        <AdminLayout>
-            {/* Header */}
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexWrap="wrap" gap={2}>
-                <Box>
-                    <Typography variant="h5" fontWeight="900" color="#0f172a">
-                        Batch Attendance Register
-                    </Typography>
-                    <Typography variant="body2" color="textSecondary">
-                        Mark batch attendance, manage student statuses, and dispatch parent absentee SMS alerts
-                    </Typography>
-                </Box>
-            </Box>
-
-            {/* BATCH-WISE ATTENDANCE SHEET */}
-            <>
-                {/* Selector Controls Bar */}
-                <Paper sx={{ p: 2.5, mb: 3, borderRadius: '12px', border: '1px solid #e0f2fe' }}>
-                            <Grid container spacing={2} alignItems="center">
-                                <Grid item xs={12} sm={6} md={4}>
-                                    <TextField
-                                        label="Select Batch"
-                                        select
-                                        fullWidth
-                                        size="small"
-                                        value={selectedBatchId}
-                                        onChange={(e) => setSelectedBatchId(e.target.value)}
-                                    >
-                                        {batches.map(b => (
-                                            <MenuItem key={b._id} value={b._id}>
-                                                {b.batchName} ({b.timing})
-                                            </MenuItem>
-                                        ))}
-                                    </TextField>
-                                </Grid>
-                                <Grid item xs={12} sm={6} md={3}>
-                                    <TextField
-                                        label="Attendance Date"
-                                        type="date"
-                                        fullWidth
-                                        size="small"
-                                        InputLabelProps={{ shrink: true }}
-                                        value={attendanceDate}
-                                        onChange={(e) => setAttendanceDate(e.target.value)}
-                                    />
-                                </Grid>
-                                <Grid item xs={12} sm={12} md={5} display="flex" justifyContent={{ xs: 'flex-start', md: 'flex-end' }} gap={1.5} flexWrap="wrap">
-                                    <Button
-                                        variant="outlined"
-                                        size="small"
-                                        onClick={() => handleMarkAll('Present')}
-                                        sx={{ borderColor: '#10b981', color: '#10b981', fontWeight: 700, textTransform: 'none' }}
-                                    >
-                                        Mark All Present
-                                    </Button>
-                                    {absentCount > 0 && (
-                                        <Button
-                                            variant="outlined"
-                                            size="small"
-                                            startIcon={<FontAwesomeIcon icon={faTowerBroadcast} />}
-                                            onClick={() => setOpenSmsModal(true)}
-                                            sx={{ borderColor: '#f97316', color: '#f97316', fontWeight: 800, textTransform: 'none' }}
-                                        >
-                                            SMS Absent Parents ({absentCount})
-                                        </Button>
-                                    )}
-                                    <Button
-                                        variant="contained"
-                                        startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <FontAwesomeIcon icon={faFloppyDisk} />}
-                                        onClick={handleSaveBatchAttendance}
-                                        disabled={saving || roster.length === 0}
-                                        sx={{
-                                            backgroundColor: '#0284c7',
-                                            '&:hover': { backgroundColor: '#0369a1' },
-                                            fontWeight: 800,
-                                            textTransform: 'none',
-                                            px: 2.5
-                                        }}
-                                    >
-                                        {saving ? 'Saving...' : 'Save Attendance'}
-                                    </Button>
-                                </Grid>
-                            </Grid>
-                        </Paper>
-
-                        {/* Summary Stats Cards */}
-                        <Grid container spacing={2} sx={{ mb: 3 }}>
-                            <Grid item xs={6} sm={3}>
-                                <Card sx={{ borderRadius: '10px', border: '1px solid #e0f2fe', bgcolor: '#fff' }}>
-                                    <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
-                                        <Typography variant="caption" color="textSecondary" fontWeight="800">TOTAL</Typography>
-                                        <Typography variant="h5" fontWeight="900" color="#0f172a">{totalCount}</Typography>
-                                        <Typography variant="caption" color="textSecondary">{batchDetails?.roomNo || 'Lab 1'}</Typography>
-                                    </CardContent>
-                                </Card>
-                            </Grid>
-                            <Grid item xs={6} sm={3}>
-                                <Card sx={{ borderRadius: '10px', border: '1px solid #dcfce7', bgcolor: '#f0fdf4' }}>
-                                    <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
-                                        <Typography variant="caption" sx={{ color: '#166534', fontWeight: 800 }}>PRESENT</Typography>
-                                        <Typography variant="h5" fontWeight="900" sx={{ color: '#16a34a' }}>{presentCount}</Typography>
-                                        <Typography variant="caption" sx={{ color: '#166534' }}>{attendancePercentage}% Rate</Typography>
-                                    </CardContent>
-                                </Card>
-                            </Grid>
-                            <Grid item xs={6} sm={3}>
-                                <Card sx={{ borderRadius: '10px', border: '1px solid #fee2e2', bgcolor: '#fef2f2' }}>
-                                    <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
-                                        <Typography variant="caption" sx={{ color: '#991b1b', fontWeight: 800 }}>ABSENT</Typography>
-                                        <Typography variant="h5" fontWeight="900" sx={{ color: '#dc2626' }}>{absentCount}</Typography>
-                                        <Typography variant="caption" sx={{ color: '#991b1b' }}>{lateCount} Late • {leaveCount} Leave</Typography>
-                                    </CardContent>
-                                </Card>
-                            </Grid>
-                            <Grid item xs={6} sm={3}>
-                                <Card sx={{ borderRadius: '10px', border: '1px solid #e0f2fe', bgcolor: isAlreadyMarked ? '#f0fdf4' : '#fffbeb' }}>
-                                    <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
-                                        <Typography variant="caption" sx={{ color: isAlreadyMarked ? '#166534' : '#92400e', fontWeight: 800 }}>STATUS</Typography>
-                                        <Typography variant="h6" fontWeight="900" sx={{ color: isAlreadyMarked ? '#16a34a' : '#d97706' }}>
-                                            {isAlreadyMarked ? '✓ Saved' : '⏳ Pending'}
-                                        </Typography>
-                                    </CardContent>
-                                </Card>
-                            </Grid>
-                        </Grid>
-
-                        {/* Student Roster Table */}
-                        {loadingRoster ? (
-                            <Box display="flex" justifyContent="center" py={6}>
-                                <CircularProgress sx={{ color: '#0284c7' }} />
-                            </Box>
-                        ) : roster.length === 0 ? (
-                            <Paper sx={{ p: 4, textAlign: 'center', borderRadius: '12px' }}>
-                                <Typography color="textSecondary">No active students enrolled in this batch.</Typography>
-                            </Paper>
-                        ) : (
-                            <Paper sx={{ borderRadius: '12px', border: '1px solid #e0f2fe', overflow: 'hidden' }}>
-                                <TableContainer>
-                                    <Table>
-                                        <TableHead sx={{ backgroundColor: '#f0f9ff' }}>
-                                            <TableRow>
-                                                <TableCell sx={{ fontWeight: 800, color: '#0369a1', width: '80px' }}>Roll No</TableCell>
-                                                <TableCell sx={{ fontWeight: 800, color: '#0369a1', width: '120px' }}>GR No</TableCell>
-                                                <TableCell sx={{ fontWeight: 800, color: '#0369a1' }}>Student Name</TableCell>
-                                                <TableCell sx={{ fontWeight: 800, color: '#0369a1', textAlign: 'center', width: '320px' }}>Attendance Status</TableCell>
-                                                <TableCell sx={{ fontWeight: 800, color: '#0369a1', width: '130px' }}>In-Time</TableCell>
-                                                <TableCell sx={{ fontWeight: 800, color: '#0369a1' }}>Remarks</TableCell>
-                                            </TableRow>
-                                        </TableHead>
-                                        <TableBody>
-                                            {roster.map((student) => (
-                                                <TableRow
-                                                    key={student.studentId}
-                                                    hover
-                                                    sx={{
-                                                        backgroundColor:
-                                                            student.status === 'Absent' ? 'rgba(239, 68, 68, 0.04)' :
-                                                            student.status === 'Leave' ? 'rgba(2, 132, 199, 0.04)' : 'inherit'
-                                                    }}
-                                                >
-                                                    <TableCell sx={{ fontWeight: 800, color: '#0f172a' }}>
-                                                        #{student.rollno}
-                                                    </TableCell>
-                                                    <TableCell sx={{ fontWeight: 600, color: '#64748b' }}>
-                                                        {student.grno}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Typography variant="body2" fontWeight="800" color="#0f172a">
-                                                            {student.fname} {student.lname}
-                                                        </Typography>
-                                                        <Typography variant="caption" color="textSecondary">
-                                                            Ph: {student.mobileNo}
-                                                        </Typography>
-                                                    </TableCell>
-
-                                                    {/* Status Selection Buttons */}
-                                                    <TableCell sx={{ textAlign: 'center' }}>
-                                                        <Box display="flex" justifyContent="center" gap={0.8}>
-                                                            {['Present', 'Absent', 'Late', 'Leave'].map(st => {
-                                                                const isSelected = student.status === st;
-                                                                const colorStyles =
-                                                                    st === 'Present' ? { bg: '#10b981', light: '#ecfdf5', text: '#065f46' } :
-                                                                    st === 'Absent' ? { bg: '#ef4444', light: '#fef2f2', text: '#991b1b' } :
-                                                                    st === 'Late' ? { bg: '#f59e0b', light: '#fffbeb', text: '#92400e' } :
-                                                                    { bg: '#0284c7', light: '#e0f2fe', text: '#0369a1' };
-
-                                                                return (
-                                                                    <Button
-                                                                        key={st}
-                                                                        size="small"
-                                                                        onClick={() => handleStatusChange(student.studentId, st)}
-                                                                        sx={{
-                                                                            minWidth: '65px',
-                                                                            py: '3px',
-                                                                            px: '6px',
-                                                                            fontSize: '11.5px',
-                                                                            fontWeight: 800,
-                                                                            textTransform: 'none',
-                                                                            borderRadius: '20px',
-                                                                            backgroundColor: isSelected ? colorStyles.bg : colorStyles.light,
-                                                                            color: isSelected ? '#ffffff' : colorStyles.text,
-                                                                            border: `1px solid ${isSelected ? colorStyles.bg : 'transparent'}`,
-                                                                            '&:hover': {
-                                                                                backgroundColor: colorStyles.bg,
-                                                                                color: '#ffffff'
-                                                                            }
-                                                                        }}
-                                                                    >
-                                                                        {st}
-                                                                    </Button>
-                                                                );
-                                                            })}
-                                                        </Box>
-                                                    </TableCell>
-
-                                                    <TableCell>
-                                                        <TextField
-                                                            size="small"
-                                                            placeholder="08:00 AM"
-                                                            value={student.inTime || ''}
-                                                            onChange={(e) => {
-                                                                const val = e.target.value;
-                                                                setRoster(prev => prev.map(it => it.studentId === student.studentId ? { ...it, inTime: val } : it));
-                                                            }}
-                                                            sx={{ width: '105px', '& .MuiInputBase-input': { fontSize: '12px', py: '5px' } }}
-                                                        />
-                                                    </TableCell>
-
-                                                    <TableCell>
-                                                        <TextField
-                                                            size="small"
-                                                            placeholder="Remarks"
-                                                            value={student.remarks || ''}
-                                                            onChange={(e) => {
-                                                                const val = e.target.value;
-                                                                setRoster(prev => prev.map(it => it.studentId === student.studentId ? { ...it, remarks: val } : it));
-                                                            }}
-                                                            sx={{ width: '100%', '& .MuiInputBase-input': { fontSize: '12px', py: '5px' } }}
-                                                        />
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
-                                </TableContainer>
-                            </Paper>
-                        )}
-                    </>
-
-                {/* Absentee SMS Broadcast Dialog */}
-                <Dialog open={openSmsModal} onClose={() => setOpenSmsModal(false)} maxWidth="xs" fullWidth>
-                    <DialogTitle sx={{ fontWeight: 800, bgcolor: '#f97316', color: '#fff' }}>
-                        Broadcast Absentee Parent SMS
-                    </DialogTitle>
-                    <DialogContent sx={{ p: 2.5, mt: 1 }}>
-                        <Typography variant="body2" color="textSecondary" mb={2}>
-                            Shoot parent absentee alert SMS for all <strong>{absentCount} absent students</strong> in this batch today?
-                        </Typography>
-                        <Box sx={{ p: 1.5, bgcolor: '#fff7ed', borderRadius: '8px', border: '1px solid #ffedd5' }}>
-                            <Typography variant="caption" color="#9a3412" fontWeight="600">
-                                📱 SMS will be dispatched to registered guardian numbers with student GR No & Batch timing.
-                            </Typography>
-                        </Box>
-                    </DialogContent>
-                    <DialogActions sx={{ p: 2, borderTop: '1px solid #e2e8f0' }}>
-                        <Button onClick={() => setOpenSmsModal(false)}>Cancel</Button>
-                        <Button
-                            variant="contained"
-                            disabled={sendingSms}
-                            startIcon={<FontAwesomeIcon icon={faPaperPlane} />}
-                            onClick={handleBroadcastAbsenteeSMS}
-                            sx={{ bgcolor: '#f97316', '&:hover': { bgcolor: '#ea580c' }, fontWeight: 800 }}
-                        >
-                            {sendingSms ? 'Broadcasting...' : 'Send Parent Alerts'}
-                        </Button>
-                    </DialogActions>
-                </Dialog>
-
-                {/* Toast Notification */}
-                <Snackbar
-                    open={toast.open}
-                    autoHideDuration={4000}
-                    onClose={() => setToast({ ...toast, open: false })}
-                >
-                    <Alert severity={toast.severity} onClose={() => setToast({ ...toast, open: false })}>
-                        {toast.message}
-                    </Alert>
-                </Snackbar>
-        </AdminLayout>
+        return item;
+      })
     );
+  };
+
+  // Mark All Present (1-Click)
+  const handleMarkAll = (statusToSet) => {
+    const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    setRoster((prev) =>
+      prev.map((item) => ({
+        ...item,
+        status: statusToSet,
+        inTime: (statusToSet === 'Present' || statusToSet === 'Late') ? nowTime : item.inTime,
+      }))
+    );
+  };
+
+  // Save Attendance & Dispatch Live Push / SMS
+  const handleSaveAttendance = async () => {
+    if (!selectedBatchId || roster.length === 0) return;
+    setSaving(true);
+
+    try {
+      const records = roster.map((r) => ({
+        studentId: r.studentId,
+        status: r.status,
+        inTime: r.inTime || '',
+        remark: r.remark || '',
+      }));
+
+      const payload = {
+        batchId: selectedBatchId,
+        date: attendanceDate,
+        records,
+      };
+
+      const res = await api.post('/attendance/mark-batch', payload);
+
+      if (res.data.success) {
+        setIsAlreadyMarked(true);
+        triggerAcademicConfetti();
+        setSuccessModal({
+          open: true,
+          title: 'Batch Attendance Recorded!',
+          message: `Attendance for ${roster.length} students synchronized successfully. Instant push alerts sent to student app.`
+        });
+      }
+    } catch (err) {
+      setToast({ open: true, message: err.response?.data?.message || 'Failed to save attendance', type: 'error' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Metrics
+  const presentCount = roster.filter((r) => r.status === 'Present').length;
+  const absentCount = roster.filter((r) => r.status === 'Absent').length;
+  const lateCount = roster.filter((r) => r.status === 'Late').length;
+  const totalCount = roster.length;
+  const presentPct = totalCount > 0 ? Math.round((presentCount / totalCount) * 100) : 0;
+
+  return (
+    <AdminLayout>
+      <PageTransition>
+        <div className="space-y-6">
+          
+          {/* Header Card */}
+          <div className="bg-white rounded-2xl border border-[#E8EDF4] p-5 sm:p-6 shadow-card flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5">
+              <div className="w-12 h-12 rounded-2xl bg-[#EEF2FF] border border-[#E0E7FF] flex items-center justify-center text-[#4338CA] shadow-sm">
+                <CalendarCheck className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-xl sm:text-2xl font-extrabold text-[#172033] tracking-tight font-display">
+                    Daily Batch Attendance Register
+                  </h1>
+                  {isAlreadyMarked && (
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#ECFDF5] text-[#10B981] border border-[#A7F3D0]">
+                      Marked
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-[#64748B] mt-0.5">
+                  Record classroom attendance, track time-in, and auto-dispatch instant notifications.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2.5 w-full md:w-auto">
+              <button
+                onClick={fetchRoster}
+                disabled={loadingRoster}
+                className="p-2.5 rounded-xl bg-[#F8FAFC] hover:bg-slate-100 text-[#64748B] border border-[#E8EDF4] text-xs font-bold transition-all"
+                title="Reload Roster"
+              >
+                <RefreshCw className={`w-4 h-4 ${loadingRoster ? 'animate-spin' : ''}`} />
+              </button>
+              <button
+                onClick={handleSaveAttendance}
+                disabled={saving || roster.length === 0}
+                className="flex-1 md:flex-none px-5 py-2.5 rounded-xl bg-[#4338CA] hover:bg-[#3730A3] active:scale-[0.99] text-white font-bold text-xs shadow-md shadow-indigo-600/25 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
+              >
+                <Save className="w-4 h-4" />
+                <span>{saving ? 'Saving...' : 'Save & Sync Register'}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Batch Selector & Attendance Summary Bar */}
+          <div className="bg-white rounded-2xl border border-[#E8EDF4] p-5 shadow-card space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              
+              {/* Select Batch */}
+              <div>
+                <label className="block text-xs font-bold text-[#172033] mb-1.5">Classroom Batch</label>
+                <select
+                  value={selectedBatchId}
+                  onChange={(e) => setSelectedBatchId(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-[#F8FAFC] border border-[#E8EDF4] rounded-xl text-xs font-semibold text-[#172033] focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-[#4338CA]"
+                >
+                  {batches.length === 0 ? (
+                    <option value="">No active batches found</option>
+                  ) : (
+                    batches.map((b) => (
+                      <option key={b._id} value={b._id}>
+                        {b.batchName} ({b.courseId?.courseName || 'Course'})
+                      </option>
+                    ))
+                  )}
+                </select>
+              </div>
+
+              {/* Attendance Date */}
+              <div>
+                <label className="block text-xs font-bold text-[#172033] mb-1.5">Attendance Date</label>
+                <input
+                  type="date"
+                  value={attendanceDate}
+                  onChange={(e) => setAttendanceDate(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-[#F8FAFC] border border-[#E8EDF4] rounded-xl text-xs font-semibold text-[#172033] focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-[#4338CA]"
+                />
+              </div>
+
+              {/* Quick 1-Click "Mark All" Controls */}
+              <div className="lg:col-span-2 flex items-end gap-2">
+                <button
+                  onClick={() => handleMarkAll('Present')}
+                  disabled={roster.length === 0}
+                  className="flex-1 py-2.5 rounded-xl bg-[#ECFDF5] hover:bg-[#D1FAE5] text-[#10B981] border border-[#A7F3D0] text-xs font-bold transition-all flex items-center justify-center gap-1.5"
+                >
+                  <Check className="w-3.5 h-3.5" /> Mark All Present
+                </button>
+                <button
+                  onClick={() => handleMarkAll('Absent')}
+                  disabled={roster.length === 0}
+                  className="flex-1 py-2.5 rounded-xl bg-[#FFF1F2] hover:bg-[#FFE4E6] text-[#E11D48] border border-[#FECDD3] text-xs font-bold transition-all flex items-center justify-center gap-1.5"
+                >
+                  <CloseIcon className="w-3.5 h-3.5" /> Mark All Absent
+                </button>
+              </div>
+
+            </div>
+
+            {/* Live Counter Badges */}
+            {roster.length > 0 && (
+              <div className="pt-3 border-t border-[#E8EDF4] grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+                <div className="p-2.5 rounded-xl bg-[#F8FAFC] border border-[#E8EDF4]">
+                  <div className="text-[11px] font-bold text-[#64748B]">Total Enrolled</div>
+                  <div className="text-xl font-black text-[#172033] mt-0.5">{totalCount}</div>
+                </div>
+                <div className="p-2.5 rounded-xl bg-[#ECFDF5] border border-[#A7F3D0]">
+                  <div className="text-[11px] font-bold text-[#10B981]">Present ({presentPct}%)</div>
+                  <div className="text-xl font-black text-[#10B981] mt-0.5">{presentCount}</div>
+                </div>
+                <div className="p-2.5 rounded-xl bg-[#FFF1F2] border border-[#FECDD3]">
+                  <div className="text-[11px] font-bold text-[#E11D48]">Absent</div>
+                  <div className="text-xl font-black text-[#E11D48] mt-0.5">{absentCount}</div>
+                </div>
+                <div className="p-2.5 rounded-xl bg-[#FFFBEB] border border-[#FDE68A]">
+                  <div className="text-[11px] font-bold text-[#D97706]">Late</div>
+                  <div className="text-xl font-black text-[#D97706] mt-0.5">{lateCount}</div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Student Roster Table */}
+          {loadingRoster ? (
+            <ClassTechLoader message="Loading Batch Roster..." />
+          ) : roster.length === 0 ? (
+            <EmptyStateIllustration
+              title="No students found in this batch"
+              description="Enroll students into this batch via Student Master or select another batch."
+            />
+          ) : (
+            <div className="bg-white rounded-2xl border border-[#E8EDF4] shadow-card overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-[#F8FAFC] border-b border-[#E8EDF4] text-[#64748B] font-bold uppercase tracking-wider text-[10px]">
+                    <tr>
+                      <th className="py-3 px-4">Roll / GR</th>
+                      <th className="py-3 px-4">Student Name</th>
+                      <th className="py-3 px-4">Parent Mobile</th>
+                      <th className="py-3 px-4 text-center">Attendance Status</th>
+                      <th className="py-3 px-4 text-center">In-Time</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#E8EDF4]">
+                    {roster.map((st) => {
+                      const isPresent = st.status === 'Present';
+                      const isAbsent = st.status === 'Absent';
+                      const isLate = st.status === 'Late';
+
+                      return (
+                        <tr key={st.studentId} className="hover:bg-slate-50/70 transition-colors">
+                          <td className="py-3 px-4 font-mono font-bold text-[#64748B]">
+                            #{st.rollno || st.grno || '—'}
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="font-bold text-[#172033]">{st.name}</div>
+                            <div className="text-[10px] text-[#64748B]">{st.email || 'Student Account'}</div>
+                          </td>
+                          <td className="py-3 px-4 font-mono text-[#64748B]">
+                            {st.parentMobile || st.mobileNo || '—'}
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex items-center justify-center gap-1.5">
+                              
+                              {/* Present Pill */}
+                              <button
+                                onClick={() => handleStatusChange(st.studentId, 'Present')}
+                                className={`px-3 py-1.5 rounded-lg font-bold text-[11px] transition-all flex items-center gap-1 ${
+                                  isPresent
+                                    ? 'bg-[#10B981] text-white shadow-sm'
+                                    : 'bg-[#F8FAFC] text-[#64748B] hover:bg-[#ECFDF5] hover:text-[#10B981] border border-[#E8EDF4]'
+                                }`}
+                              >
+                                <Check className="w-3.5 h-3.5" /> Present
+                              </button>
+
+                              {/* Absent Pill */}
+                              <button
+                                onClick={() => handleStatusChange(st.studentId, 'Absent')}
+                                className={`px-3 py-1.5 rounded-lg font-bold text-[11px] transition-all flex items-center gap-1 ${
+                                  isAbsent
+                                    ? 'bg-[#E11D48] text-white shadow-sm'
+                                    : 'bg-[#F8FAFC] text-[#64748B] hover:bg-[#FFF1F2] hover:text-[#E11D48] border border-[#E8EDF4]'
+                                }`}
+                              >
+                                <CloseIcon className="w-3.5 h-3.5" /> Absent
+                              </button>
+
+                              {/* Late Pill */}
+                              <button
+                                onClick={() => handleStatusChange(st.studentId, 'Late')}
+                                className={`px-3 py-1.5 rounded-lg font-bold text-[11px] transition-all flex items-center gap-1 ${
+                                  isLate
+                                    ? 'bg-[#F59E0B] text-white shadow-sm'
+                                    : 'bg-[#F8FAFC] text-[#64748B] hover:bg-[#FFFBEB] hover:text-[#F59E0B] border border-[#E8EDF4]'
+                                }`}
+                              >
+                                <Clock className="w-3.5 h-3.5" /> Late
+                              </button>
+
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 text-center font-mono text-xs font-semibold text-[#64748B]">
+                            {st.inTime || '—'}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+        </div>
+      </PageTransition>
+
+      {/* Success Celebration Modal */}
+      <SuccessModal
+        isOpen={successModal.open}
+        title={successModal.title}
+        message={successModal.message}
+        onClose={() => setSuccessModal({ open: false, title: '', message: '' })}
+      />
+
+    </AdminLayout>
+  );
 };
 
 export default AttendanceEntry;

@@ -10,6 +10,7 @@ import {
   Trash2, ShieldCheck, CheckCircle2, Copy, Building2, Key, Mail, Phone, Lock, Sparkles
 } from 'lucide-react';
 import AdminLayout from '../Common/AdminLayout';
+import { PageTransition, SuccessCheckmark, triggerAcademicConfetti } from '../Common/MotionWrapper';
 import api from '../../api';
 
 const SuperAdminDashboard = () => {
@@ -77,6 +78,7 @@ const SuperAdminDashboard = () => {
         email: classForm.email || `admin@${classForm.code.toLowerCase()}.com`,
         password: classForm.ownerPassword,
       });
+      triggerAcademicConfetti();
       setToast({ open: true, message: 'Coaching Class and Admin provisioned successfully!', severity: 'success' });
       fetchData();
     } catch (err) {
@@ -96,8 +98,9 @@ const SuperAdminDashboard = () => {
 
   return (
     <AdminLayout>
+      <PageTransition>
       {/* Education Radiant Banner */}
-      <div className="bg-gradient-to-r from-blue-50 via-indigo-50/60 to-white border border-blue-100 rounded-3xl p-6 sm:p-8 mb-8 text-slate-900 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
+      <div className="bg-gradient-to-r from-indigo-50 via-blue-50/60 to-white border border-[#E8EDF4] rounded-3xl p-6 sm:p-8 mb-8 text-[#172033] shadow-card flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
         <div className="flex items-center gap-5 relative z-10">
           <div className="w-16 h-16 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/20 shrink-0">
             <GraduationCap className="w-9 h-9" />
@@ -343,41 +346,43 @@ const SuperAdminDashboard = () => {
           </form>
         </Dialog>
 
-        {/* Credentials Created Card Modal */}
-        <Dialog open={!!createdCredentialsModal} onClose={() => setCreatedCredentialsModal(null)} maxWidth="xs" fullWidth>
-          <DialogTitle sx={{ fontWeight: 800, bgcolor: '#16a34a', color: '#fff', textAlign: 'center' }}>
-            🎉 Class Provisioned Successfully!
-          </DialogTitle>
+        {/* Institute Credentials Modal */}
+        <Dialog open={Boolean(createdCredentialsModal)} onClose={() => setCreatedCredentialsModal(null)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: '20px', p: 1 } }}>
           <DialogContent sx={{ p: 3, textAlign: 'center' }}>
-            <div className="space-y-3 text-left">
-              <p className="text-xs text-slate-500">
-                Share these initial credentials with the coaching class admin:
-              </p>
-              <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 text-xs space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Class Code:</span>
-                  <span className="font-mono font-black text-blue-600 text-sm">{createdCredentialsModal?.classCode}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Admin Email:</span>
-                  <span className="font-mono font-bold">{createdCredentialsModal?.email}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Password:</span>
-                  <span className="font-mono font-bold text-emerald-700">{createdCredentialsModal?.password}</span>
-                </div>
+            <Box sx={{ mb: 2 }}>
+              <SuccessCheckmark size={58} />
+            </Box>
+            <Typography variant="h6" fontWeight="900" color="#172033" fontFamily="'Plus Jakarta Sans', sans-serif" mb={0.5}>
+              Campus Provisioned!
+            </Typography>
+            <Typography variant="body2" color="#64748B" mb={2}>
+              {createdCredentialsModal?.className}
+            </Typography>
+
+            <div className="p-3.5 bg-[#F8FAFC] rounded-2xl border border-[#E8EDF4] text-xs space-y-2.5 text-left mb-3">
+              <div className="flex justify-between items-center">
+                <span className="text-[#64748B] font-medium">Campus Code:</span>
+                <span className="font-mono font-black text-[#4338CA] text-sm">{createdCredentialsModal?.classCode}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-[#64748B] font-medium">Admin Email:</span>
+                <span className="font-mono font-bold text-[#172033]">{createdCredentialsModal?.email}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-[#64748B] font-medium">Default Password:</span>
+                <span className="font-mono font-bold text-[#10B981]">{createdCredentialsModal?.password}</span>
               </div>
             </div>
-          </DialogContent>
-          <DialogActions sx={{ p: 2, bgcolor: '#f8fafc', justifyContent: 'center' }}>
+
             <Button
               variant="contained"
+              fullWidth
               onClick={() => setCreatedCredentialsModal(null)}
-              sx={{ fontWeight: 800, bgcolor: '#2563eb', width: '100%' }}
+              sx={{ bgcolor: '#4338CA', '&:hover': { bgcolor: '#3730A3' }, fontWeight: 800, borderRadius: '12px', py: 1.2 }}
             >
-              Done
+              Done & Continue
             </Button>
-          </DialogActions>
+          </DialogContent>
         </Dialog>
 
         {/* Toast */}
@@ -390,6 +395,7 @@ const SuperAdminDashboard = () => {
             {toast.message}
           </Alert>
         </Snackbar>
+      </PageTransition>
     </AdminLayout>
   );
 };

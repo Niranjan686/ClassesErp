@@ -10,6 +10,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate } from 'react-router-dom';
 import AdminLayout from '../Common/AdminLayout';
+import { PageTransition } from '../Common/MotionWrapper';
 import api from '../../api';
 
 const DAY_OPTIONS = [
@@ -157,6 +158,7 @@ const BatchMaster = () => {
 
     return (
         <AdminLayout>
+            <PageTransition>
             {/* Header */}
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexWrap="wrap" gap={2}>
                 <Box>
@@ -499,6 +501,7 @@ const BatchMaster = () => {
                         {toast.message}
                     </Alert>
                 </Snackbar>
+            </PageTransition>
         </AdminLayout>
     );
 };

@@ -11,6 +11,7 @@ import {
     faPaperPlane, faCircleCheck
 } from '@fortawesome/free-solid-svg-icons';
 import AdminLayout from '../Common/AdminLayout';
+import { SuccessCheckmark, triggerAcademicConfetti } from '../Common/MotionWrapper';
 import api from '../../api';
 
 const StudentMaster = () => {
@@ -192,6 +193,7 @@ const StudentMaster = () => {
                 setToast({ open: true, message: 'Student details updated!', severity: 'success' });
             } else {
                 const res = await api.post('/students', payload);
+                triggerAcademicConfetti();
                 setAdmissionSuccessModal({
                     studentName: `${payload.fname} ${payload.lname}`,
                     grno: payload.grno,
@@ -866,25 +868,25 @@ const StudentMaster = () => {
                 </Dialog>
 
                 {/* Admission Credentials Success Dialog */}
-                <Dialog open={Boolean(admissionSuccessModal)} onClose={() => setAdmissionSuccessModal(null)} maxWidth="xs" fullWidth>
+                <Dialog open={Boolean(admissionSuccessModal)} onClose={() => setAdmissionSuccessModal(null)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: '20px', p: 1 } }}>
                     {admissionSuccessModal && (
                         <Box sx={{ p: 3, textAlign: 'center' }}>
-                            <Avatar sx={{ bgcolor: '#10b981', width: 60, height: 60, margin: '0 auto 12px' }}>
-                                <FontAwesomeIcon icon={faCircleCheck} size="xl" />
-                            </Avatar>
-                            <Typography variant="h6" fontWeight="900" color="#166534">
-                                Admission & Student Portal Ready!
+                            <Box sx={{ mb: 2 }}>
+                                <SuccessCheckmark size={58} />
+                            </Box>
+                            <Typography variant="h6" fontWeight="900" color="#172033" fontFamily="'Plus Jakarta Sans', sans-serif">
+                                Admission Confirmed!
                             </Typography>
-                            <Typography variant="body2" color="textSecondary" mb={2}>
+                            <Typography variant="body2" color="#64748B" mb={2}>
                                 {admissionSuccessModal.studentName} ({admissionSuccessModal.grno})
                             </Typography>
 
-                            <Paper sx={{ p: 2, bgcolor: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '10px', textAlign: 'left', mb: 2 }}>
-                                <Typography variant="caption" color="textSecondary" display="block">Portal URL: <strong>http://localhost:5173/login</strong></Typography>
-                                <Typography variant="caption" color="textSecondary" display="block">Student GR No / User: <strong>{admissionSuccessModal.username}</strong></Typography>
-                                <Typography variant="caption" color="textSecondary" display="block">Password: <strong>{admissionSuccessModal.password}</strong></Typography>
-                                <Typography variant="caption" sx={{ color: '#0369a1', fontWeight: 700, mt: 1, display: 'block' }}>
-                                    ✉️ Welcome Email & SMS dispatched to student's mobile & email.
+                            <Paper sx={{ p: 2, bgcolor: '#F8FAFC', border: '1px solid #E8EDF4', borderRadius: '12px', textAlign: 'left', mb: 2.5 }}>
+                                <Typography variant="caption" color="#64748B" display="block">Student Portal: <strong>http://localhost:5173/app</strong></Typography>
+                                <Typography variant="caption" color="#64748B" display="block">Username / Mobile: <strong>{admissionSuccessModal.username}</strong></Typography>
+                                <Typography variant="caption" color="#64748B" display="block">Default Password: <strong>{admissionSuccessModal.password}</strong></Typography>
+                                <Typography variant="caption" sx={{ color: '#4338CA', fontWeight: 700, mt: 1, display: 'block' }}>
+                                    ✓ Welcome SMS & mobile app access dispatched automatically.
                                 </Typography>
                             </Paper>
 
@@ -892,9 +894,9 @@ const StudentMaster = () => {
                                 variant="contained"
                                 fullWidth
                                 onClick={() => setAdmissionSuccessModal(null)}
-                                sx={{ bgcolor: '#0284c7', fontWeight: 800 }}
+                                sx={{ bgcolor: '#4338CA', '&:hover': { bgcolor: '#3730A3' }, fontWeight: 800, borderRadius: '12px', py: 1.2 }}
                             >
-                                Done
+                                Continue
                             </Button>
                         </Box>
                     )}

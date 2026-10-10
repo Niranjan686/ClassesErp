@@ -9,25 +9,39 @@ export default {
     extend: {
       colors: {
         brand: {
-          50: 'var(--brand-50, #f0fdf4)',
-          100: 'var(--brand-100, #dcfce7)',
-          200: 'var(--brand-200, #bbf7d0)',
-          300: 'var(--brand-300, #86efac)',
-          400: 'var(--brand-400, #4ade80)',
-          500: 'var(--brand-500, #22c55e)',
-          600: 'var(--brand-600, #16a34a)',
-          700: 'var(--brand-700, #15803d)',
-          800: 'var(--brand-800, #166534)',
-          900: 'var(--brand-900, #14532d)',
-          primary: 'var(--brand-primary, #2563eb)',
-          secondary: 'var(--brand-secondary, #7c3aed)',
-          accent: 'var(--brand-accent, #06b6d4)',
+          50: '#EEF2FF',
+          100: '#E0E7FF',
+          200: '#C7D2FE',
+          300: '#A5B4FC',
+          400: '#818CF8',
+          500: '#6366F1',
+          600: '#4F46E5',
+          700: '#4338CA', // Primary Deep Indigo
+          800: '#3730A3',
+          900: '#312E81',
+          primary: '#4338CA',
+          secondary: '#60A5FA',
+          accent: '#38BDF8',
+          navy: '#172033',
+        },
+        slate: {
+          50: '#F8FAFC', // Background
+          100: '#F1F5F9',
+          200: '#E8EDF4', // Subtle Borders
+          300: '#CBD5E1',
+          400: '#94A3B8',
+          500: '#64748B', // Secondary Text
+          600: '#475569',
+          700: '#334155',
+          800: '#1E293B',
+          900: '#172033', // Primary Text
+          950: '#0B0F19',
         },
         surface: {
-          light: '#ffffff',
-          dark: '#0f172a',
-          card: 'var(--card-bg, #ffffff)',
-          border: 'var(--border-color, #e2e8f0)',
+          light: '#FFFFFF',
+          dark: '#172033',
+          card: '#FFFFFF',
+          border: '#E8EDF4',
         }
       },
       fontFamily: {
@@ -35,13 +49,15 @@ export default {
         display: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
       },
       boxShadow: {
-        'soft': '0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04)',
-        'glow': '0 0 20px -3px var(--brand-primary, #2563eb40)',
-        'premium': '0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.03)',
+        'soft': '0 2px 10px -2px rgba(23, 32, 51, 0.04), 0 8px 16px -4px rgba(23, 32, 51, 0.02)',
+        'glow': '0 0 20px -3px rgba(67, 56, 202, 0.25)',
+        'card': '0 1px 3px 0 rgba(23, 32, 51, 0.04), 0 1px 2px -1px rgba(23, 32, 51, 0.02)',
+        'modal': '0 20px 25px -5px rgba(23, 32, 51, 0.1), 0 8px 10px -6px rgba(23, 32, 51, 0.05)',
       },
       borderRadius: {
+        'xl': '12px',
         '2xl': '16px',
-        '3xl': '24px',
+        '3xl': '20px',
       }
     },
   },

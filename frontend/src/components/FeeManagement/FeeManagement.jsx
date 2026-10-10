@@ -12,6 +12,7 @@ import {
     faMoneyCheck, faBell, faCheckCircle, faClock, faUserGraduate, faPhone
 } from '@fortawesome/free-solid-svg-icons';
 import AdminLayout from '../Common/AdminLayout';
+import { PageTransition, triggerAcademicConfetti } from '../Common/MotionWrapper';
 import api from '../../api';
 
 const PAYMENT_MODES = [
@@ -110,6 +111,7 @@ const FeeManagement = () => {
             const res = await api.post('/fees/collect', collectForm);
             setToast({ open: true, message: res.data.message, severity: 'success' });
             setOpenCollectDialog(false);
+            triggerAcademicConfetti();
 
             // Open Receipt Modal immediately for printing
             setReceiptModal({
@@ -181,6 +183,7 @@ const FeeManagement = () => {
 
     return (
         <AdminLayout>
+            <PageTransition>
             {/* Header Banner */}
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexWrap="wrap" gap={2}>
                 <Box>
@@ -721,6 +724,7 @@ const FeeManagement = () => {
                             {toast.message}
                         </Alert>
                     </Snackbar>
+            </PageTransition>
         </AdminLayout>
     );
 };

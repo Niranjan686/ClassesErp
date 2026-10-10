@@ -1,48 +1,30 @@
-import React, { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import {
   GraduationCap, Lock, Mail, ArrowRight, ShieldCheck,
-  Building2, Smartphone, Sparkles, Layers, Cpu
+  Building2, Smartphone, Sparkles, CheckCircle2, ChevronLeft,
+  UserCheck, School
 } from 'lucide-react';
+import { FloatingEducationalElements } from './Common/EducationalSVGs';
 import api from '../api';
 
 const Login = () => {
   const [roleMode, setRoleMode] = useState('admin'); // 'admin' | 'superadmin'
-  const [identifier, setIdentifier] = useState('admin@k001.com');
-  const [password, setPassword] = useState('Class@123');
+  const [identifier, setIdentifier] = useState('admin@apex.com');
+  const [password, setPassword] = useState('Admin@123');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-
-  // 3D Card Tilt State
-  const [tilt, setTilt] = useState({ x: 0, y: 0 });
-  const cardRef = useRef(null);
-
-  const handleMouseMove = (e) => {
-    if (!cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-    const rotateX = ((y - centerY) / centerY) * -7;
-    const rotateY = ((x - centerX) / centerX) * 7;
-    setTilt({ x: rotateX, y: rotateY });
-  };
-
-  const handleMouseLeave = () => {
-    setTilt({ x: 0, y: 0 });
-  };
 
   const handleRoleSwitch = (role) => {
     setRoleMode(role);
     setError('');
     if (role === 'admin') {
-      setIdentifier('admin@k001.com');
-      setPassword('Class@123');
+      setIdentifier('admin@apex.com');
+      setPassword('Admin@123');
     } else {
       setIdentifier('superadmin');
-      setPassword('Scanid@1234');
+      setPassword('Demo@123');
     }
   };
 
@@ -81,181 +63,161 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-950 to-blue-950 flex flex-col justify-between items-center p-4 sm:p-6 lg:p-8 font-sans antialiased text-slate-100 relative overflow-hidden">
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col justify-between items-center p-4 sm:p-6 lg:p-8 font-sans antialiased text-slate-900 relative overflow-hidden selection:bg-indigo-500 selection:text-white">
       
-      {/* 3D Ambient Glowing Background Orbs */}
-      <div className="absolute top-1/4 -left-20 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl pointer-events-none animate-pulse"></div>
-      <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none animate-pulse delay-1000"></div>
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-500/5 rounded-full blur-3xl pointer-events-none"></div>
+      {/* Background Soft Glow & Floating Academic Accents */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-gradient-to-b from-indigo-50/70 via-sky-50/30 to-transparent pointer-events-none -z-10 blur-2xl"></div>
+      <FloatingEducationalElements />
 
-      {/* Top Header */}
+      {/* Top Header & Navigation */}
       <div className="w-full max-w-5xl flex items-center justify-between py-2 z-10">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/25 border border-white/20 transform transition-transform hover:scale-105">
+        <Link to="/" className="flex items-center gap-2.5 group">
+          <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform">
             <GraduationCap className="w-5 h-5" />
           </div>
           <div>
-            <span className="font-black text-xl text-white tracking-tight flex items-center gap-1.5">
-              ClassTech <span className="text-[10px] uppercase font-extrabold bg-blue-500/20 border border-blue-400/30 text-blue-300 px-2 py-0.5 rounded-full">3D ERP</span>
+            <span className="font-extrabold text-lg text-slate-900 tracking-tight flex items-center gap-1.5 font-display">
+              ClassTech
             </span>
-            <span className="text-xs text-slate-400 font-medium hidden sm:inline">Next-Gen Multi-Tenant Cloud</span>
           </div>
-        </div>
-        
-        <div className="flex items-center gap-2 text-xs font-semibold text-blue-200 bg-white/5 border border-white/10 backdrop-blur-md px-3.5 py-1.5 rounded-full shadow-inner">
-          <Smartphone className="w-3.5 h-3.5 text-blue-400 animate-bounce" />
-          <span className="hidden sm:inline">Dedicated Student Mobile App Available</span>
-          <span className="sm:hidden">Student App</span>
-        </div>
+        </Link>
+
+        <Link
+          to="/"
+          className="text-xs font-bold text-slate-500 hover:text-indigo-600 transition-colors flex items-center gap-1 bg-white px-3 py-1.5 rounded-xl border border-slate-200/80 shadow-sm"
+        >
+          <ChevronLeft className="w-3.5 h-3.5" /> Back to Home
+        </Link>
       </div>
 
-      {/* Center 3D Tilt Card */}
-      <div className="w-full max-w-md my-auto py-6 z-10" style={{ perspective: 1000 }}>
-        <div
-          ref={cardRef}
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
-          style={{
-            transform: `rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`,
-            transition: tilt.x === 0 && tilt.y === 0 ? 'all 0.5s ease' : 'none',
-          }}
-          className="bg-slate-900/80 backdrop-blur-xl rounded-3xl border border-white/10 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7)] p-7 sm:p-9 relative group"
-        >
-          {/* Subtle Top 3D Light Sheen */}
-          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-blue-400 to-transparent"></div>
+      {/* Main Login Card */}
+      <div className="w-full max-w-md my-auto z-10">
+        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-[0_15px_45px_-10px_rgba(0,0,0,0.06)] p-6 sm:p-8">
           
-          {/* Title & Badge */}
+          {/* Card Title */}
           <div className="text-center mb-6">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-[11px] font-bold text-blue-300 mb-3">
-              <Sparkles className="w-3 h-3 text-blue-400" />
-              <span>Unified Institutional Portal</span>
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-600 mb-3 shadow-sm">
+              <School className="w-6 h-6" />
             </div>
-            <h1 className="text-2xl font-black text-white tracking-tight">Admin & Superadmin Access</h1>
-            <p className="text-xs text-slate-400 mt-1.5">
-              Secure biometric & cloud access for coaching operations
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight font-display">
+              Sign in to ClassTech
+            </h1>
+            <p className="text-xs text-slate-500 mt-1">
+              Select your role to access your school operations portal.
             </p>
           </div>
 
-          {/* 3D Segmented Role Switcher */}
-          <div className="grid grid-cols-2 gap-2 p-1.5 bg-black/40 rounded-2xl border border-white/5 mb-6">
+          {/* Role Mode Segmented Switcher */}
+          <div className="p-1 rounded-xl bg-slate-100 border border-slate-200/80 flex gap-1 mb-6">
             <button
               type="button"
               onClick={() => handleRoleSwitch('admin')}
-              className={`py-2.5 text-xs font-extrabold rounded-xl transition-all flex items-center justify-center gap-2 ${
+              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
                 roleMode === 'admin'
-                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/30 scale-[1.02]'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-white text-indigo-700 shadow-sm border border-slate-200/60'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              <Building2 className="w-4 h-4" />
-              <span>Class Admin</span>
+              <Building2 className="w-3.5 h-3.5" />
+              <span>Class / Branch Admin</span>
             </button>
             <button
               type="button"
               onClick={() => handleRoleSwitch('superadmin')}
-              className={`py-2.5 text-xs font-extrabold rounded-xl transition-all flex items-center justify-center gap-2 ${
+              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
                 roleMode === 'superadmin'
-                  ? 'bg-gradient-to-r from-slate-700 to-slate-800 text-white shadow-md shadow-slate-900/50 border border-white/10 scale-[1.02]'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-white text-indigo-700 shadow-sm border border-slate-200/60'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              <ShieldCheck className="w-4 h-4" />
+              <ShieldCheck className="w-3.5 h-3.5" />
               <span>Super Admin</span>
             </button>
           </div>
 
           {/* Error Banner */}
           {error && (
-            <div className="mb-5 p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-xs font-medium text-rose-300 flex items-center gap-2 animate-shake">
-              <ShieldCheck className="w-4 h-4 text-rose-400 shrink-0" />
+            <div className="mb-5 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-start gap-2 animate-fadeIn">
+              <span className="font-bold">•</span>
               <span>{error}</span>
             </div>
           )}
 
-          {/* Form */}
+          {/* Login Form */}
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                {roleMode === 'admin' ? 'Institute Email or Username' : 'Superadmin Username'}
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                {roleMode === 'admin' ? 'Official Email Address / Username' : 'Superadmin Username'}
               </label>
               <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <Mail className="w-4 h-4" />
+                </div>
                 <input
                   type="text"
                   required
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
-                  placeholder={roleMode === 'admin' ? 'admin@k001.com' : 'superadmin'}
-                  className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-sm font-semibold text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  placeholder={roleMode === 'admin' ? 'admin@apex.com' : 'superadmin'}
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50/70 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-white transition-all"
                 />
-                <Mail className="w-4 h-4 text-slate-400 absolute right-3.5 top-3.5" />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1.5">Password</label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-bold text-slate-700">Password</label>
+              </div>
               <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <Lock className="w-4 h-4" />
+                </div>
                 <input
                   type="password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-sm font-semibold text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  placeholder="••••••••••••"
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50/70 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-white transition-all"
                 />
-                <Lock className="w-4 h-4 text-slate-400 absolute right-3.5 top-3.5" />
               </div>
             </div>
 
-            {/* 3D Action Button */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-3 py-3 px-4 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold text-sm shadow-[0_10px_25px_-5px_rgba(37,99,235,0.4)] flex items-center justify-center gap-2 transition-all transform active:scale-95 disabled:opacity-60"
+              className="w-full mt-2 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white font-bold text-xs sm:text-sm shadow-md shadow-indigo-600/25 hover:shadow-indigo-600/35 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
             >
               {loading ? (
-                <span>Authenticating with Cloud...</span>
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
               ) : (
                 <>
-                  <span>Sign In as {roleMode === 'admin' ? 'Class Admin' : 'Super Admin'}</span>
+                  <span>Sign In as {roleMode === 'admin' ? 'Class Administrator' : 'Super Admin'}</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
             </button>
           </form>
 
-          {/* Demo Hint */}
-          <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between text-[11px] text-slate-400">
-            <span className="font-medium">Test credentials:</span>
-            <span className="font-mono font-bold text-blue-300 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded-lg">
-              {roleMode === 'admin' ? 'admin@k001.com / Class@123' : 'superadmin / Scanid@1234'}
-            </span>
+          {/* Student Mobile App Gateway Link */}
+          <div className="mt-6 pt-5 border-t border-slate-100 text-center">
+            <Link
+              to="/app"
+              className="inline-flex items-center gap-2 text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50/70 hover:bg-indigo-50 border border-indigo-100 px-3.5 py-2 rounded-xl transition-all"
+            >
+              <Smartphone className="w-3.5 h-3.5" />
+              <span>Student / Parent Mobile Portal</span>
+            </Link>
           </div>
-        </div>
 
-        {/* 3D Student App Floating Notice Card */}
-        <div className="mt-4 p-4 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 shadow-lg flex items-center gap-3 transform transition-all hover:translate-y-[-2px]">
-          <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-400/30 flex items-center justify-center text-blue-400 shrink-0 shadow-inner">
-            <Smartphone className="w-5 h-5" />
-          </div>
-          <div className="text-xs">
-            <p className="font-bold text-white flex items-center gap-1.5">
-              <span>Student & Parent Portal</span>
-              <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.2 rounded font-mono">APP ONLY</span>
-            </p>
-            <p className="text-slate-400 text-[11px] mt-0.5">Students log in via mobile number + OTP on the mobile app.</p>
-          </div>
         </div>
       </div>
 
-      {/* Footer */}
-      <div className="w-full max-w-5xl flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 py-3 gap-2 border-t border-white/5 z-10">
-        <p>© 2026 ClassTech ERP Technologies • Multi-Tenant Engine</p>
-        <div className="flex items-center gap-4 text-[11px]">
-          <span className="hover:text-slate-300 cursor-pointer">Security Protocol</span>
-          <span className="hover:text-slate-300 cursor-pointer">Terms & Compliance</span>
-          <span className="hover:text-slate-300 cursor-pointer">Status: 99.99% Uptime</span>
-        </div>
+      {/* Footer System Status */}
+      <div className="py-4 text-center text-xs text-slate-400 z-10">
+        <span>© {new Date().getFullYear()} ClassTech EdTech Systems · High Security 256-Bit SSL</span>
       </div>
+
     </div>
   );
 };

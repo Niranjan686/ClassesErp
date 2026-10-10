@@ -1,313 +1,225 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-    AppBar, Toolbar, Typography, Box, IconButton, Chip, Menu, MenuItem,
-    Avatar, TextField, InputAdornment, Button, Badge
-} from '@mui/material';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-    faBuilding, faCalendarDays, faMagnifyingGlass, faArrowRight,
-    faGlobe, faBell, faChevronDown, faRightFromBracket, faCircle
-} from '@fortawesome/free-solid-svg-icons';
-import { useNavigate, useLocation } from 'react-router-dom';
+  Menu as MenuIcon, Search, Bell, ChevronDown, Building2,
+  Calendar, Globe, LogOut, User, Sparkles, CheckCircle2,
+  ExternalLink, Smartphone, ShieldCheck
+} from 'lucide-react';
 
 const Navbar = ({ onToggleSidebar }) => {
-    const navigate = useNavigate();
-    const location = useLocation();
-    const [anchorEl, setAnchorEl] = useState(null);
-    const [campusAnchor, setCampusAnchor] = useState(null);
-    const [yearAnchor, setYearAnchor] = useState(null);
-    const [langAnchor, setLangAnchor] = useState(null);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [notificationOpen, setNotificationOpen] = useState(false);
+  const [selectedCampus, setSelectedCampus] = useState('Global Admin View');
+  const [selectedYear, setSelectedYear] = useState('2026-2027');
 
-    const [selectedCampus, setSelectedCampus] = useState('Global Admin View / All Campuses');
-    const [selectedYear, setSelectedYear] = useState('2026-2027');
-    const [selectedLang, setSelectedLang] = useState('English');
-    const [searchTerm, setSearchTerm] = useState('');
+  const [currentUser, setCurrentUser] = useState({
+    name: 'Class Administrator',
+    role: 'ADMIN',
+    email: 'admin@school.com'
+  });
 
-    const [currentUser, setCurrentUser] = useState({
-        name: 'Super Admin',
-        role: 'SUPERADMIN',
-        username: 'superadmin'
-    });
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    const storedInst = localStorage.getItem('institute');
 
-    useEffect(() => {
-        const storedUser = localStorage.getItem('user');
-        const storedInst = localStorage.getItem('institute');
+    if (storedInst) {
+      try {
+        const inst = JSON.parse(storedInst);
+        setSelectedCampus(`${inst.name} [${inst.code}]`);
+      } catch (e) {}
+    }
 
-        if (storedInst) {
-            try {
-                const inst = JSON.parse(storedInst);
-                setSelectedCampus(`${inst.name} [${inst.code}]`);
-            } catch (e) {}
+    if (storedUser) {
+      try {
+        const parsed = JSON.parse(storedUser);
+        setCurrentUser({
+          name: parsed.name || (parsed.role === 'superadmin' ? 'Super Admin' : parsed.fname ? `${parsed.fname} ${parsed.lname}` : 'Administrator'),
+          role: (parsed.role || 'ADMIN').toUpperCase(),
+          email: parsed.email || parsed.username || 'admin@school.com'
+        });
+        if (!storedInst && parsed.role === 'superadmin') {
+          setSelectedCampus('Superadmin Control Cloud');
         }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }, []);
 
-        if (storedUser) {
-            try {
-                const parsed = JSON.parse(storedUser);
-                setCurrentUser({
-                    name: parsed.name || (parsed.role === 'superadmin' ? 'Super Admin' : parsed.fname ? `${parsed.fname} ${parsed.lname}` : 'Administrator'),
-                    role: (parsed.role || 'SUPERADMIN').toUpperCase(),
-                    username: parsed.username || 'admin'
-                });
-                if (!storedInst && parsed.role === 'superadmin') {
-                    setSelectedCampus('Global Admin Cloud');
-                }
-            } catch (e) {
-                console.error(e);
-            }
-        }
-    }, []);
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('institute');
+    navigate('/login');
+  };
 
-    const handleLogout = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        navigate('/login');
-    };
-
-    return (
-        <AppBar
-            position="fixed"
-            elevation={0}
-            sx={{
-                height: '70px',
-                width: { xs: '100%', md: 'calc(100% - 260px)' },
-                left: { xs: 0, md: '260px' },
-                top: 0,
-                zIndex: (th) => th.zIndex.drawer + 1,
-                backgroundColor: '#ffffff',
-                borderBottom: '1px solid #e2e8f0',
-                color: '#1e293b',
-                justifyContent: 'center',
-                boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.04)'
-            }}
+  return (
+    <header className="fixed top-0 right-0 left-0 md:left-64 h-16 bg-white/95 backdrop-blur-md border-b border-[#E8EDF4] z-30 flex items-center justify-between px-4 sm:px-6 transition-all">
+      
+      {/* Left Area: Mobile Toggle, Campus Pill & Academic Session */}
+      <div className="flex items-center gap-2.5 sm:gap-3">
+        <button
+          onClick={onToggleSidebar}
+          className="md:hidden p-2 rounded-xl text-[#64748B] hover:text-[#172033] hover:bg-slate-100 transition-colors"
+          aria-label="Toggle navigation"
         >
-            <Toolbar sx={{ minHeight: '70px !important', height: '70px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: { xs: 1.5, md: 3 } }}>
-                {/* Left & Middle Filters */}
-                <Box display="flex" alignItems="center" gap={1.5} flexWrap="nowrap" sx={{ overflowX: 'auto' }}>
-                    {/* Campus Selector Pill */}
-                    <Button
-                        onClick={(e) => setCampusAnchor(e.currentTarget)}
-                        endIcon={<FontAwesomeIcon icon={faChevronDown} style={{ fontSize: '10px', color: '#64748b' }} />}
-                        startIcon={<Box sx={{ width: 22, height: 22, borderRadius: '6px', bgcolor: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px' }}><FontAwesomeIcon icon={faBuilding} /></Box>}
-                        sx={{
-                            bgcolor: '#f8fafc',
-                            border: '1px solid #e2e8f0',
-                            borderRadius: '12px',
-                            color: '#0f172a',
-                            fontWeight: 700,
-                            fontSize: '12.5px',
-                            textTransform: 'none',
-                            px: 1.8,
-                            py: 0.8,
-                            whiteSpace: 'nowrap',
-                            '&:hover': { bgcolor: '#f1f5f9', borderColor: '#cbd5e1' }
-                        }}
-                    >
-                        {selectedCampus}
-                    </Button>
-                    <Menu
-                        anchorEl={campusAnchor}
-                        open={Boolean(campusAnchor)}
-                        onClose={() => setCampusAnchor(null)}
-                    >
-                        <MenuItem onClick={() => { setSelectedCampus('Global Admin View / All Campuses'); setCampusAnchor(null); }}>Global Admin View / All Campuses</MenuItem>
-                        <MenuItem onClick={() => { setSelectedCampus('Main Campus (Dadar West)'); setCampusAnchor(null); }}>Main Campus (Dadar West)</MenuItem>
-                        <MenuItem onClick={() => { setSelectedCampus('Andheri Academic Branch'); setCampusAnchor(null); }}>Andheri Academic Branch</MenuItem>
-                        <MenuItem onClick={() => { setSelectedCampus('Thane Digital Center'); setCampusAnchor(null); }}>Thane Digital Center</MenuItem>
-                    </Menu>
+          <MenuIcon className="w-5 h-5" />
+        </button>
 
-                    {/* Academic Year Selector Pill */}
-                    <Button
-                        onClick={(e) => setYearAnchor(e.currentTarget)}
-                        endIcon={<FontAwesomeIcon icon={faChevronDown} style={{ fontSize: '10px', color: '#64748b' }} />}
-                        startIcon={<Box sx={{ width: 22, height: 22, borderRadius: '6px', bgcolor: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px' }}><FontAwesomeIcon icon={faCalendarDays} /></Box>}
-                        sx={{
-                            bgcolor: '#f8fafc',
-                            border: '1px solid #e2e8f0',
-                            borderRadius: '12px',
-                            color: '#0f172a',
-                            fontWeight: 700,
-                            fontSize: '12.5px',
-                            textTransform: 'none',
-                            px: 1.8,
-                            py: 0.8,
-                            whiteSpace: 'nowrap',
-                            '&:hover': { bgcolor: '#f1f5f9', borderColor: '#cbd5e1' }
-                        }}
-                    >
-                        {selectedYear}
-                    </Button>
-                    <Menu
-                        anchorEl={yearAnchor}
-                        open={Boolean(yearAnchor)}
-                        onClose={() => setYearAnchor(null)}
-                    >
-                        <MenuItem onClick={() => { setSelectedYear('2026-2027'); setYearAnchor(null); }}>2026-2027</MenuItem>
-                        <MenuItem onClick={() => { setSelectedYear('2025-2026'); setYearAnchor(null); }}>2025-2026</MenuItem>
-                        <MenuItem onClick={() => { setSelectedYear('2024-2025'); setYearAnchor(null); }}>2024-2025</MenuItem>
-                    </Menu>
+        {/* Campus / Institute Badge */}
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#F8FAFC] border border-[#E8EDF4] text-xs font-bold text-[#172033]">
+          <div className="w-5 h-5 rounded-md bg-[#EEF2FF] text-[#4338CA] flex items-center justify-center">
+            <Building2 className="w-3.5 h-3.5" />
+          </div>
+          <span className="truncate max-w-[140px] sm:max-w-[220px]">{selectedCampus}</span>
+        </div>
 
-                    {/* Search Input Pill */}
-                    <Box sx={{ display: { xs: 'none', lg: 'flex' }, alignItems: 'center', bgcolor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '14px', px: 1.5, py: 0.4, width: '280px' }}>
-                        <Box sx={{ width: 24, height: 24, borderRadius: '50%', bgcolor: '#2563eb', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', mr: 1 }}>
-                            <FontAwesomeIcon icon={faMagnifyingGlass} />
-                        </Box>
-                        <input
-                            type="text"
-                            placeholder="Search students, teach..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            style={{
-                                border: 'none',
-                                outline: 'none',
-                                backgroundColor: 'transparent',
-                                fontSize: '12.5px',
-                                color: '#0f172a',
-                                width: '100%',
-                                fontFamily: 'Inter, sans-serif',
-                                fontWeight: 500
-                            }}
-                        />
-                        <Box sx={{ width: 22, height: 22, borderRadius: '6px', bgcolor: '#e2e8f0', color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', cursor: 'pointer' }}>
-                            <FontAwesomeIcon icon={faArrowRight} />
-                        </Box>
-                    </Box>
-                </Box>
+        {/* Academic Session Badge */}
+        <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-[#F8FAFC] border border-[#E8EDF4] text-xs font-semibold text-[#64748B]">
+          <Calendar className="w-3.5 h-3.5 text-[#64748B]" />
+          <span>Session: {selectedYear}</span>
+        </div>
+      </div>
 
-                {/* Right Profile & Tools */}
-                <Box display="flex" alignItems="center" gap={{ xs: 1, sm: 2 }}>
-                    {/* Language Dropdown */}
-                    <Button
-                        onClick={(e) => setLangAnchor(e.currentTarget)}
-                        startIcon={<Box sx={{ width: 20, height: 20, borderRadius: '50%', bgcolor: '#6366f1', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px' }}><FontAwesomeIcon icon={faGlobe} /></Box>}
-                        endIcon={<FontAwesomeIcon icon={faChevronDown} style={{ fontSize: '9px', color: '#64748b' }} />}
-                        sx={{
-                            display: { xs: 'none', sm: 'inline-flex' },
-                            bgcolor: '#f8fafc',
-                            border: '1px solid #e2e8f0',
-                            borderRadius: '12px',
-                            color: '#0f172a',
-                            fontWeight: 700,
-                            fontSize: '12px',
-                            textTransform: 'none',
-                            px: 1.5,
-                            py: 0.7
-                        }}
-                    >
-                        <Chip label="EN" size="small" sx={{ height: '18px', fontSize: '10px', fontWeight: 800, bgcolor: '#e0e7ff', color: '#4338ca', mr: 0.5 }} />
-                        {selectedLang}
-                    </Button>
-                    <Menu
-                        anchorEl={langAnchor}
-                        open={Boolean(langAnchor)}
-                        onClose={() => setLangAnchor(null)}
-                    >
-                        <MenuItem onClick={() => { setSelectedLang('English'); setLangAnchor(null); }}>English (EN)</MenuItem>
-                        <MenuItem onClick={() => { setSelectedLang('Hindi'); setLangAnchor(null); }}>Hindi (HI)</MenuItem>
-                        <MenuItem onClick={() => { setSelectedLang('Marathi'); setLangAnchor(null); }}>Marathi (MR)</MenuItem>
-                    </Menu>
+      {/* Right Area: Student App Shortcut, Notifications & User Avatar */}
+      <div className="flex items-center gap-2 sm:gap-3">
+        
+        {/* Quick Link to Student Mobile Companion */}
+        <Link
+          to="/app"
+          target="_blank"
+          className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-[#4338CA] bg-[#EEF2FF] hover:bg-[#E0E7FF] border border-[#E0E7FF] transition-all"
+          title="Open Student Mobile Companion App"
+        >
+          <Smartphone className="w-3.5 h-3.5" />
+          <span>Student App</span>
+        </Link>
 
-                    {/* Active Online Green Dot */}
-                    <Box sx={{ width: 9, height: 9, borderRadius: '50%', bgcolor: '#10b981', boxShadow: '0 0 0 3px rgba(16, 185, 129, 0.2)' }} />
+        {/* Notifications Popover */}
+        <div className="relative">
+          <button
+            onClick={() => setNotificationOpen(!notificationOpen)}
+            className="p-2 rounded-xl text-[#64748B] hover:text-[#172033] hover:bg-slate-100 transition-colors relative"
+            aria-label="Notifications"
+          >
+            <Bell className="w-4.5 h-4.5" />
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#4338CA] ring-2 ring-white"></span>
+          </button>
 
-                    {/* Notification Bell Badge (9+) */}
-                    <IconButton
-                        sx={{
-                            width: 38,
-                            height: 38,
-                            bgcolor: '#f8fafc',
-                            border: '1px solid #e2e8f0',
-                            borderRadius: '12px',
-                            color: '#2563eb',
-                            position: 'relative'
-                        }}
-                    >
-                        <FontAwesomeIcon icon={faBell} style={{ fontSize: '14px' }} />
-                        <Box
-                            sx={{
-                                position: 'absolute',
-                                top: -3,
-                                right: -3,
-                                bgcolor: '#2563eb',
-                                color: '#ffffff',
-                                borderRadius: '10px',
-                                px: 0.6,
-                                py: 0.1,
-                                fontSize: '9.5px',
-                                fontWeight: 900,
-                                border: '2px solid #ffffff'
-                            }}
-                        >
-                            9+
-                        </Box>
-                    </IconButton>
+          <AnimatePresence>
+            {notificationOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.96 }}
+                transition={{ duration: 0.18 }}
+                className="absolute right-0 mt-2 w-80 bg-white rounded-2xl border border-[#E8EDF4] shadow-modal p-4 text-xs z-50"
+              >
+                <div className="flex items-center justify-between pb-2.5 border-b border-slate-100 font-bold text-[#172033]">
+                  <span>System Notifications</span>
+                  <span className="text-[10px] text-[#4338CA] bg-[#EEF2FF] px-2 py-0.5 rounded-full">Real-time</span>
+                </div>
+                <div className="py-2.5 space-y-2 max-h-60 overflow-y-auto">
+                  <div className="p-2.5 rounded-xl bg-[#F8FAFC] border border-[#E8EDF4]">
+                    <div className="font-semibold text-[#172033]">Live Attendance Sync Active</div>
+                    <div className="text-[#64748B] text-[11px] mt-0.5">Push notifications and SMS dispatch queues running normally.</div>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-[#F8FAFC] border border-[#E8EDF4]">
+                    <div className="font-semibold text-[#172033]">Fee Ledger Online</div>
+                    <div className="text-[#64748B] text-[11px] mt-0.5">Automated PDF receipts generation configured.</div>
+                  </div>
+                </div>
+                <div className="pt-2 text-center border-t border-slate-100">
+                  <button 
+                    onClick={() => setNotificationOpen(false)}
+                    className="text-[#4338CA] hover:underline font-bold text-[11px]"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
-                    {/* User Profile */}
-                    <Box
-                        onClick={(e) => setAnchorEl(e.currentTarget)}
-                        sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 1.2,
-                            cursor: 'pointer',
-                            p: 0.5,
-                            borderRadius: '12px',
-                            '&:hover': { bgcolor: '#f8fafc' }
-                        }}
-                    >
-                        <Box sx={{ textAlign: 'right', display: { xs: 'none', md: 'block' } }}>
-                            <Typography variant="caption" sx={{ color: '#94a3b8', fontSize: '9.5px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.8px', display: 'block', lineHeight: 1 }}>
-                                {currentUser.role}
-                            </Typography>
-                            <Typography variant="body2" fontWeight="800" sx={{ color: '#0f172a', fontSize: '13px', lineHeight: 1.2, mt: 0.2 }}>
-                                {currentUser.name}
-                            </Typography>
-                        </Box>
-                        <Avatar
-                            sx={{
-                                width: 38,
-                                height: 38,
-                                bgcolor: '#0f172a',
-                                color: '#ffffff',
-                                fontWeight: 900,
-                                fontSize: '13px',
-                                border: '2px solid #e2e8f0'
-                            }}
-                        >
-                            SA
-                        </Avatar>
-                    </Box>
+        {/* User Profile Pill & Dropdown */}
+        <div className="relative">
+          <button
+            onClick={() => setUserMenuOpen(!userMenuOpen)}
+            className="flex items-center gap-2 p-1 pl-2 pr-2.5 rounded-xl border border-[#E8EDF4] hover:bg-slate-50 transition-all text-left"
+          >
+            <div className="w-7 h-7 rounded-lg bg-[#4338CA] text-white flex items-center justify-center font-bold text-xs shadow-sm">
+              {currentUser.name.charAt(0)}
+            </div>
+            <div className="hidden sm:block">
+              <div className="text-xs font-bold text-[#172033] leading-tight truncate max-w-[110px]">{currentUser.name}</div>
+              <div className="text-[10px] text-[#64748B] font-medium leading-none">{currentUser.role}</div>
+            </div>
+            <ChevronDown className="w-3.5 h-3.5 text-[#64748B]" />
+          </button>
 
-                    <Menu
-                        anchorEl={anchorEl}
-                        open={Boolean(anchorEl)}
-                        onClose={() => setAnchorEl(null)}
-                        PaperProps={{
-                            sx: {
-                                mt: 1.5,
-                                borderRadius: '14px',
-                                boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
-                                minWidth: '190px',
-                                p: 0.5,
-                                border: '1px solid #e2e8f0'
-                            }
-                        }}
-                    >
-                        <Box sx={{ px: 2, py: 1.5, borderBottom: '1px solid #f1f5f9' }}>
-                            <Typography variant="subtitle2" fontWeight="800" color="#0f172a">
-                                {currentUser.name}
-                            </Typography>
-                            <Typography variant="caption" color="textSecondary">
-                                {currentUser.username}@classtech.com
-                            </Typography>
-                        </Box>
-                        <MenuItem onClick={handleLogout} sx={{ color: '#ef4444', fontWeight: 700, gap: 1.5, mt: 0.5, borderRadius: '8px' }}>
-                            <FontAwesomeIcon icon={faRightFromBracket} /> Sign Out
-                        </MenuItem>
-                    </Menu>
-                </Box>
-            </Toolbar>
-        </AppBar>
-    );
+          <AnimatePresence>
+            {userMenuOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.96 }}
+                transition={{ duration: 0.18 }}
+                className="absolute right-0 mt-2 w-56 bg-white rounded-2xl border border-[#E8EDF4] shadow-modal p-2 text-xs z-50"
+              >
+                <div className="p-2 border-b border-slate-100 mb-1">
+                  <div className="font-bold text-[#172033] truncate">{currentUser.name}</div>
+                  <div className="text-[#64748B] text-[11px] truncate">{currentUser.email}</div>
+                </div>
+
+                {currentUser.role === 'SUPERADMIN' ? (
+                  <Link
+                    to="/super-admin"
+                    onClick={() => setUserMenuOpen(false)}
+                    className="flex items-center gap-2 p-2 rounded-xl text-[#172033] hover:bg-slate-50 hover:text-[#4338CA] font-semibold transition-colors"
+                  >
+                    <ShieldCheck className="w-4 h-4 text-[#4338CA]" />
+                    <span>Superadmin Hub</span>
+                  </Link>
+                ) : (
+                  <Link
+                    to="/dashboard"
+                    onClick={() => setUserMenuOpen(false)}
+                    className="flex items-center gap-2 p-2 rounded-xl text-[#172033] hover:bg-slate-50 hover:text-[#4338CA] font-semibold transition-colors"
+                  >
+                    <Building2 className="w-4 h-4 text-[#4338CA]" />
+                    <span>Admin Dashboard</span>
+                  </Link>
+                )}
+
+                <Link
+                  to="/"
+                  onClick={() => setUserMenuOpen(false)}
+                  className="flex items-center gap-2 p-2 rounded-xl text-[#172033] hover:bg-slate-50 hover:text-[#4338CA] font-semibold transition-colors"
+                >
+                  <ExternalLink className="w-4 h-4 text-[#64748B]" />
+                  <span>ClassTech Home</span>
+                </Link>
+
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-2 p-2 rounded-xl text-rose-600 hover:bg-rose-50 font-bold transition-colors mt-1"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Sign Out</span>
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+      </div>
+
+    </header>
+  );
 };
 
 export default Navbar;

@@ -8,6 +8,8 @@ import {
     faTableCells, faPrint, faFileCsv, faRotateRight, faCheckCircle, faClock
 } from '@fortawesome/free-solid-svg-icons';
 import AdminLayout from '../Common/AdminLayout';
+import { PageTransition } from '../Common/MotionWrapper';
+import { ClassTechLoader } from '../Common/ClassTechLoader';
 import api from '../../api';
 
 const MonthlyAttendance = () => {
@@ -86,6 +88,7 @@ const MonthlyAttendance = () => {
 
     return (
         <AdminLayout>
+            <PageTransition>
             {/* Header */}
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexWrap="wrap" gap={2}>
                 <Box>
@@ -265,6 +268,7 @@ const MonthlyAttendance = () => {
                         {toast.message}
                     </Alert>
                 </Snackbar>
+            </PageTransition>
         </AdminLayout>
     );
 };

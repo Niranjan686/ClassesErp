@@ -12,6 +12,9 @@ import {
     faClock, faShieldHalved, faHeartPulse, faAddressBook
 } from '@fortawesome/free-solid-svg-icons';
 import AdminLayout from '../Common/AdminLayout';
+import { PageTransition } from '../Common/MotionWrapper';
+import { ClassTechLoader } from '../Common/ClassTechLoader';
+import { EmptyStateIllustration } from '../Common/EducationalSVGs';
 import api from '../../api';
 
 const StudentList = () => {
@@ -99,6 +102,7 @@ const StudentList = () => {
 
     return (
         <AdminLayout>
+            <PageTransition>
             {/* Header Banner */}
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexWrap="wrap" gap={2}>
                 <Box>
@@ -524,6 +528,7 @@ const StudentList = () => {
                             {toast.message}
                         </Alert>
                     </Snackbar>
+            </PageTransition>
         </AdminLayout>
     );
 };

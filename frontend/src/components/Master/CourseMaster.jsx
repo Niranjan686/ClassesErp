@@ -9,6 +9,7 @@ import {
     faPlus, faSearch, faEdit, faTrash, faBookOpen, faClock
 } from '@fortawesome/free-solid-svg-icons';
 import AdminLayout from '../Common/AdminLayout';
+import { PageTransition } from '../Common/MotionWrapper';
 import api from '../../api';
 
 const CATEGORIES = [
@@ -129,6 +130,7 @@ const CourseMaster = () => {
 
     return (
         <AdminLayout>
+            <PageTransition>
             {/* Header */}
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexWrap="wrap" gap={2}>
                 <Box>
@@ -377,6 +379,7 @@ const CourseMaster = () => {
                         {toast.message}
                     </Alert>
                 </Snackbar>
+            </PageTransition>
         </AdminLayout>
     );
 };
