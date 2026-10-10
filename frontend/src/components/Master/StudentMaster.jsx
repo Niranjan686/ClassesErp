@@ -271,20 +271,27 @@ const StudentMaster = () => {
                     </Button>
                 </Box>
 
-                {/* Filters */}
-                <Paper sx={{ p: 2, mb: 3, borderRadius: '12px', border: '1px solid #e0f2fe' }}>
+                {/* Minimalist Filter Toolbar */}
+                <Paper sx={{ p: 2, mb: 3, borderRadius: '16px', border: '1px solid #e2e8f0', bgcolor: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
                     <Grid container spacing={2} alignItems="center">
                         <Grid item xs={12} md={4}>
                             <TextField
                                 fullWidth
                                 size="small"
-                                placeholder="Search by name, GR No, mobile, RFID..."
+                                placeholder="Search by name, GR No, phone, RFID..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: '10px',
+                                        bgcolor: '#f8fafc',
+                                        '& fieldset': { borderColor: '#e2e8f0' },
+                                    }
+                                }}
                                 InputProps={{
                                     startAdornment: (
                                         <InputAdornment position="start">
-                                            <FontAwesomeIcon icon={faSearch} style={{ color: '#0284c7' }} />
+                                            <FontAwesomeIcon icon={faSearch} style={{ color: '#94a3b8', fontSize: '14px' }} />
                                         </InputAdornment>
                                     )
                                 }}
@@ -295,9 +302,16 @@ const StudentMaster = () => {
                                 fullWidth
                                 select
                                 size="small"
-                                label="Course Filter"
+                                label="Course"
                                 value={courseFilter}
                                 onChange={(e) => setCourseFilter(e.target.value)}
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: '10px',
+                                        bgcolor: '#f8fafc',
+                                        '& fieldset': { borderColor: '#e2e8f0' },
+                                    }
+                                }}
                             >
                                 <MenuItem value="ALL">All Courses ({courses.length})</MenuItem>
                                 {courses.map(c => (
@@ -310,9 +324,16 @@ const StudentMaster = () => {
                                 fullWidth
                                 select
                                 size="small"
-                                label="Batch Filter"
+                                label="Batch Slot"
                                 value={batchFilter}
                                 onChange={(e) => setBatchFilter(e.target.value)}
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: '10px',
+                                        bgcolor: '#f8fafc',
+                                        '& fieldset': { borderColor: '#e2e8f0' },
+                                    }
+                                }}
                             >
                                 <MenuItem value="ALL">All Batches ({batches.length})</MenuItem>
                                 {batches.map(b => (
@@ -328,6 +349,13 @@ const StudentMaster = () => {
                                 label="Status"
                                 value={statusFilter}
                                 onChange={(e) => setStatusFilter(e.target.value)}
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: '10px',
+                                        bgcolor: '#f8fafc',
+                                        '& fieldset': { borderColor: '#e2e8f0' },
+                                    }
+                                }}
                             >
                                 <MenuItem value="ALL">All Status</MenuItem>
                                 <MenuItem value="Active">Active</MenuItem>
@@ -338,121 +366,204 @@ const StudentMaster = () => {
                     </Grid>
                 </Paper>
 
-                {/* Students Table */}
+                {/* Minimalist Spacious Students Data Grid */}
                 {loading ? (
-                    <Box display="flex" justifyContent="center" py={6}>
-                        <CircularProgress sx={{ color: '#0284c7' }} />
+                    <Box display="flex" justifyContent="center" py={8}>
+                        <CircularProgress sx={{ color: '#2563eb' }} />
                     </Box>
                 ) : (
-                    <Paper sx={{ borderRadius: '14px', border: '1px solid #e0f2fe', overflow: 'hidden' }}>
+                    <Paper sx={{ borderRadius: '16px', border: '1px solid #e2e8f0', overflow: 'hidden', bgcolor: '#ffffff', mb: 8, boxShadow: '0 1px 4px rgba(0,0,0,0.03)' }}>
                         <TableContainer>
-                            <Table>
-                                <TableHead sx={{ backgroundColor: '#f0f9ff' }}>
+                            <Table sx={{ minWidth: 700 }}>
+                                <TableHead sx={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
                                     <TableRow>
-                                        <TableCell sx={{ fontWeight: 800, color: '#0369a1' }}>GR No / Roll</TableCell>
-                                        <TableCell sx={{ fontWeight: 800, color: '#0369a1' }}>Student Name</TableCell>
-                                        <TableCell sx={{ fontWeight: 800, color: '#0369a1' }}>Course & Batch</TableCell>
-                                        <TableCell sx={{ fontWeight: 800, color: '#0369a1' }}>Contact Details</TableCell>
-                                        <TableCell sx={{ fontWeight: 800, color: '#0369a1' }}>Fees Status</TableCell>
-                                        <TableCell sx={{ fontWeight: 800, color: '#0369a1' }}>Status</TableCell>
-                                        <TableCell sx={{ fontWeight: 800, color: '#0369a1', textAlign: 'right' }}>Actions</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#64748b', py: 2 }}>GR & Roll</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#64748b', py: 2 }}>Student Name</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#64748b', py: 2 }}>Enrolled Program</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#64748b', py: 2 }}>Contact</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#64748b', py: 2 }}>Fee Balance</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#64748b', py: 2 }}>Status</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#64748b', textAlign: 'right', pr: 3, py: 2 }}>Actions</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
                                     {filteredStudents.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={7} sx={{ textAlign: 'center', py: 4, color: '#64748b' }}>
-                                                No students found matching your filters.
+                                            <TableCell colSpan={7} sx={{ textAlign: 'center', py: 6, color: '#94a3b8', fontSize: '13px' }}>
+                                                No student profiles found matching your search criteria.
                                             </TableCell>
                                         </TableRow>
                                     ) : (
                                         filteredStudents.map((st) => {
                                             const isPaid = (st.balanceFees || 0) === 0;
                                             return (
-                                                <TableRow key={st._id} hover>
-                                                    <TableCell>
-                                                        <Typography variant="body2" fontWeight="800" color="#0f172a">
+                                                <TableRow
+                                                    key={st._id}
+                                                    hover
+                                                    sx={{
+                                                        borderBottom: '1px solid #f1f5f9',
+                                                        transition: 'background-color 0.15s ease',
+                                                        '&:hover': { bgcolor: '#f8fafc' }
+                                                    }}
+                                                >
+                                                    {/* GR No & Roll */}
+                                                    <TableCell sx={{ py: 2.5 }}>
+                                                        <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: 'monospace', color: '#0f172a' }}>
                                                             {st.grno}
                                                         </Typography>
-                                                        <Typography variant="caption" color="textSecondary">
-                                                            Roll #{st.rollno}
+                                                        <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 500 }}>
+                                                            Roll #{st.rollno || '1'}
                                                         </Typography>
                                                     </TableCell>
-                                                    <TableCell>
-                                                        <Box display="flex" alignItems="center" gap={1.5}>
-                                                            <Avatar sx={{ bgcolor: st.gender === 'Female' ? '#ec4899' : '#0284c7', width: 36, height: 36, fontSize: '13px', fontWeight: 'bold' }}>
-                                                                {st.fname[0]}{st.lname[0]}
+
+                                                    {/* Student Avatar & Name */}
+                                                    <TableCell sx={{ py: 2.5 }}>
+                                                        <Box display="flex" alignItems="center" gap={1.8}>
+                                                            <Avatar
+                                                                sx={{
+                                                                    bgcolor: '#eff6ff',
+                                                                    color: '#2563eb',
+                                                                    border: '1px solid #dbeafe',
+                                                                    width: 38,
+                                                                    height: 38,
+                                                                    fontSize: '13px',
+                                                                    fontWeight: 800
+                                                                }}
+                                                            >
+                                                                {st.fname?.[0] || 'S'}{st.lname?.[0] || ''}
                                                             </Avatar>
                                                             <Box>
-                                                                <Typography variant="body2" fontWeight="800" color="#0f172a">
+                                                                <Typography variant="body2" sx={{ fontWeight: 700, color: '#0f172a', lineHeight: 1.3 }}>
                                                                     {st.fname} {st.mname ? `${st.mname} ` : ''}{st.lname}
                                                                 </Typography>
-                                                                <Typography variant="caption" color="textSecondary">
-                                                                    {st.gender} • {st.academicYear}
+                                                                <Typography variant="caption" sx={{ color: '#64748b' }}>
+                                                                    {st.gender || 'Student'} • {st.academicYear || '2026-2027'}
                                                                 </Typography>
                                                             </Box>
                                                         </Box>
                                                     </TableCell>
-                                                    <TableCell>
-                                                        <Chip
-                                                            label={st.courseId?.courseName || 'No Course'}
-                                                            size="small"
-                                                            sx={{ fontWeight: 700, backgroundColor: '#e0f2fe', color: '#0369a1', mb: 0.5, maxWidth: 200 }}
-                                                        />
-                                                        <Typography variant="caption" display="block" color="textSecondary">
-                                                            {st.batchId?.batchName ? `${st.batchId.batchName} (${st.batchId.timing})` : 'Unassigned Batch'}
+
+                                                    {/* Enrolled Course & Batch */}
+                                                    <TableCell sx={{ py: 2.5 }}>
+                                                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#1e293b' }}>
+                                                            {st.courseId?.courseName || 'General Program'}
+                                                        </Typography>
+                                                        <Typography variant="caption" sx={{ color: '#64748b', display: 'block', mt: 0.2 }}>
+                                                            {st.batchId?.batchName ? `${st.batchId.batchName} (${st.batchId.timing})` : 'Default Batch'}
                                                         </Typography>
                                                     </TableCell>
-                                                    <TableCell>
-                                                        <Box display="flex" alignItems="center" gap={0.8}>
-                                                            <FontAwesomeIcon icon={faPhone} style={{ color: '#0284c7', fontSize: '11px' }} />
-                                                            <Typography variant="body2">{st.mobileNo}</Typography>
+
+                                                    {/* Contact & RFID */}
+                                                    <TableCell sx={{ py: 2.5 }}>
+                                                        <Box display="flex" alignItems="center" gap={1}>
+                                                            <FontAwesomeIcon icon={faPhone} style={{ color: '#94a3b8', fontSize: '11px' }} />
+                                                            <Typography variant="body2" sx={{ fontFamily: 'monospace', fontWeight: 600, color: '#334155' }}>
+                                                                {st.mobileNo}
+                                                            </Typography>
                                                         </Box>
                                                         {st.rfid && (
-                                                            <Chip label={st.rfid} size="small" variant="outlined" sx={{ fontSize: '10px', height: '18px', mt: 0.3 }} />
+                                                            <Typography variant="caption" sx={{ color: '#94a3b8', display: 'block', mt: 0.3, fontSize: '10px' }}>
+                                                                RFID: {st.rfid}
+                                                            </Typography>
                                                         )}
                                                     </TableCell>
-                                                    <TableCell>
-                                                        <Chip
-                                                            label={isPaid ? 'Fully Paid' : `Bal: ₹${st.balanceFees}`}
-                                                            size="small"
-                                                            sx={{
-                                                                backgroundColor: isPaid ? '#dcfce7' : '#fee2e2',
-                                                                color: isPaid ? '#166534' : '#991b1b',
-                                                                fontWeight: 800
-                                                            }}
-                                                        />
-                                                        <Typography variant="caption" display="block" color="textSecondary">
-                                                            Paid ₹{st.paidFees} / ₹{st.totalFees}
-                                                        </Typography>
+
+                                                    {/* Fee Status */}
+                                                    <TableCell sx={{ py: 2.5 }}>
+                                                        {isPaid ? (
+                                                            <Box display="flex" alignItems="center" gap={0.8}>
+                                                                <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#16a34a' }} />
+                                                                <Typography variant="body2" sx={{ fontWeight: 700, color: '#16a34a' }}>
+                                                                    Cleared
+                                                                </Typography>
+                                                            </Box>
+                                                        ) : (
+                                                            <Box>
+                                                                <Typography variant="body2" sx={{ fontWeight: 800, color: '#e11d48' }}>
+                                                                    ₹{(st.balanceFees || 0).toLocaleString('en-IN')} Due
+                                                                </Typography>
+                                                                <Typography variant="caption" sx={{ color: '#94a3b8' }}>
+                                                                    Paid ₹{(st.paidFees || 0).toLocaleString('en-IN')} of ₹{(st.totalFees || 0).toLocaleString('en-IN')}
+                                                                </Typography>
+                                                            </Box>
+                                                        )}
                                                     </TableCell>
-                                                    <TableCell>
-                                                        <Chip
-                                                            label={st.status}
-                                                            size="small"
+
+                                                    {/* Status Badge */}
+                                                    <TableCell sx={{ py: 2.5 }}>
+                                                        <Box
                                                             sx={{
-                                                                backgroundColor: st.status === 'Active' ? '#dcfce7' : '#f1f5f9',
-                                                                color: st.status === 'Active' ? '#166534' : '#64748b',
-                                                                fontWeight: 700
+                                                                display: 'inline-flex',
+                                                                alignItems: 'center',
+                                                                gap: 0.8,
+                                                                px: 1.2,
+                                                                py: 0.4,
+                                                                borderRadius: '20px',
+                                                                bgcolor: st.status === 'Active' ? '#f0fdf4' : '#f8fafc',
+                                                                border: '1px solid',
+                                                                borderColor: st.status === 'Active' ? '#bbf7d0' : '#e2e8f0',
                                                             }}
-                                                        />
+                                                        >
+                                                            <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: st.status === 'Active' ? '#16a34a' : '#94a3b8' }} />
+                                                            <Typography variant="caption" sx={{ fontWeight: 700, color: st.status === 'Active' ? '#15803d' : '#64748b' }}>
+                                                                {st.status || 'Active'}
+                                                            </Typography>
+                                                        </Box>
                                                     </TableCell>
-                                                    <TableCell sx={{ textAlign: 'right' }}>
-                                                        <Tooltip title="View Student ID Card">
-                                                            <IconButton size="small" onClick={() => setIdCardStudent(st)} sx={{ color: '#0284c7', mr: 0.5 }}>
-                                                                <FontAwesomeIcon icon={faIdCard} />
-                                                            </IconButton>
-                                                        </Tooltip>
-                                                        <Tooltip title="Edit Profile">
-                                                            <IconButton size="small" onClick={() => handleOpenEdit(st)} sx={{ color: '#0369a1', mr: 0.5 }}>
-                                                                <FontAwesomeIcon icon={faEdit} />
-                                                            </IconButton>
-                                                        </Tooltip>
-                                                        <Tooltip title="Delete Student">
-                                                            <IconButton size="small" onClick={() => handleDelete(st._id, `${st.fname} ${st.lname}`)} sx={{ color: '#ef4444' }}>
-                                                                <FontAwesomeIcon icon={faTrash} />
-                                                            </IconButton>
-                                                        </Tooltip>
+
+                                                    {/* Actions */}
+                                                    <TableCell sx={{ textAlign: 'right', pr: 3, py: 2.5 }}>
+                                                        <Box display="flex" justifyContent="flex-end" alignItems="center" gap={0.8}>
+                                                            <Tooltip title="View 3D PVC ID Card">
+                                                                <IconButton
+                                                                    size="small"
+                                                                    onClick={() => setIdCardStudent(st)}
+                                                                    sx={{
+                                                                        width: 32,
+                                                                        height: 32,
+                                                                        borderRadius: '8px',
+                                                                        bgcolor: '#eff6ff',
+                                                                        color: '#2563eb',
+                                                                        '&:hover': { bgcolor: '#dbeafe' }
+                                                                    }}
+                                                                >
+                                                                    <FontAwesomeIcon icon={faIdCard} style={{ fontSize: '13px' }} />
+                                                                </IconButton>
+                                                            </Tooltip>
+                                                            <Tooltip title="Edit Student">
+                                                                <IconButton
+                                                                    size="small"
+                                                                    onClick={() => handleOpenEdit(st)}
+                                                                    sx={{
+                                                                        width: 32,
+                                                                        height: 32,
+                                                                        borderRadius: '8px',
+                                                                        bgcolor: '#f8fafc',
+                                                                        color: '#475569',
+                                                                        border: '1px solid #e2e8f0',
+                                                                        '&:hover': { bgcolor: '#f1f5f9' }
+                                                                    }}
+                                                                >
+                                                                    <FontAwesomeIcon icon={faEdit} style={{ fontSize: '13px' }} />
+                                                                </IconButton>
+                                                            </Tooltip>
+                                                            <Tooltip title="Delete Record">
+                                                                <IconButton
+                                                                    size="small"
+                                                                    onClick={() => handleDeleteStudent(st._id)}
+                                                                    sx={{
+                                                                        width: 32,
+                                                                        height: 32,
+                                                                        borderRadius: '8px',
+                                                                        bgcolor: '#fff1f2',
+                                                                        color: '#e11d48',
+                                                                        '&:hover': { bgcolor: '#ffe4e6' }
+                                                                    }}
+                                                                >
+                                                                    <FontAwesomeIcon icon={faTrash} style={{ fontSize: '13px' }} />
+                                                                </IconButton>
+                                                            </Tooltip>
+                                                        </Box>
                                                     </TableCell>
                                                 </TableRow>
                                             );
@@ -465,6 +576,7 @@ const StudentMaster = () => {
                 )}
 
                 {/* Add / Edit Student Multi-Tab Dialog */}
+
                 <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
                     <form onSubmit={handleSubmit}>
                         <DialogTitle sx={{ fontWeight: 800, backgroundColor: '#0284c7', color: '#fff' }}>

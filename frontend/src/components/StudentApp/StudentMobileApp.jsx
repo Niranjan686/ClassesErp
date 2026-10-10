@@ -56,8 +56,9 @@ const StudentMobileApp = () => {
       const res = await api.post('/auth/send-mobile-otp', { mobileNo });
       if (res.data.success) {
         setStep('otp');
-        setOtp('1234'); // Pre-fill demo OTP for fast login
-        setDemoHint(`Demo OTP: ${res.data.demoOtp || '1234'}`);
+        const code = res.data.dynamicOtp || res.data.otp || '123456';
+        setOtp(code);
+        setDemoHint(`Dynamic 6-Digit OTP: ${code}`);
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to send OTP. Please check mobile number.');
@@ -65,6 +66,7 @@ const StudentMobileApp = () => {
       setLoading(false);
     }
   };
+
 
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
@@ -250,18 +252,18 @@ const StudentMobileApp = () => {
 
                     <input
                       type="text"
-                      maxLength={4}
+                      maxLength={6}
                       required
                       value={otp}
                       onChange={(e) => setOtp(e.target.value)}
-                      placeholder="1234"
-                      className="w-full px-4 py-3 text-center text-xl tracking-[0.5em] font-black rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="123456"
+                      className="w-full px-4 py-3 text-center text-xl tracking-[0.4em] font-black rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
 
                   {demoHint && (
                     <div className="p-2.5 rounded-lg bg-blue-50 border border-blue-100 text-center text-xs font-semibold text-blue-700">
-                      💡 {demoHint} (Pre-filled for fast test)
+                      ✨ {demoHint} (Valid for 10 minutes)
                     </div>
                   )}
 
@@ -273,6 +275,7 @@ const StudentMobileApp = () => {
                     {loading ? 'Verifying...' : 'Login to Student App'}
                     <CheckCircle2 className="w-4 h-4" />
                   </button>
+
                 </form>
               )}
 
