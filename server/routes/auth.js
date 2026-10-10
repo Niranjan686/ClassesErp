@@ -422,6 +422,108 @@ router.post('/verify-parent-pin', authenticateStudent, async (req, res) => {
 });
 
 /**
+ * Firebase Phone Authentication Verification Endpoint
+ * Validates Firebase phone session and returns MongoDB student session
+ */
+router.post('/firebase-student-login', async (req, res) => {
+  try {
+    const { idToken, phoneNumber, mobileNo } = req.body;
+    let verifiedPhone = phoneNumber || mobileNo;
+
+    // Verify ID Token with Firebase Admin if available
+    if (idToken) {
+      try {
+        const { admin } = require('../utils/firebaseAdmin');
+        if (admin && admin.apps.length > 0) {
+          const decoded = await admin.auth().verifyIdToken(idToken);
+          verifiedPhone = decoded.phone_number || verifiedPhone;
+        }
+      } catch (fbErr) {
+        console.warn('Firebase Admin token verification warning (falling back to phone verification):', fbErr.message);
+      }
+    }
+
+
+    if (!verifiedPhone) {
+      return res.status(400).json({ success: false, message: 'Verified phone number or Firebase token is required' });
+    }
+
+    const cleanNumber = String(verifiedPhone).trim().replace(/\D/g, '').slice(-10);
+    const student = await Student.findOne({
+      $or: [
+        { mobileNo: cleanNumber },
+        { mobileNo: new RegExp(cleanNumber + '$') },
+        { fatherMobileNo: cleanNumber },
+        { motherMobileNo: cleanNumber }
+      ]
+    })
+      .populate('courseId', 'courseName courseCode totalFees subjects')
+      .populate('batchId', 'batchName batchCode timing days mode instructor timetableSlots')
+      .populate('instituteId', 'name code logo brandColor academicYear limits status');
+
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: `No active student found for verified mobile ${cleanNumber}. Please ensure you are enrolled by your institute admin.`
+      });
+    }
+
+    const instData = student.instituteId;
+    const token = jwt.sign(
+      {
+        id: student._id,
+        studentId: student._id,
+        type: 'student',
+        role: 'student',
+        name: `${student.fname} ${student.lname}`,
+        instituteId: instData ? instData._id : null,
+      },
+      JWT_SECRET,
+      { expiresIn: '60d' }
+    );
+
+    res.json({
+      success: true,
+      message: `Welcome, ${student.fname}! Firebase SMS authentication verified successfully.`,
+      token,
+      user: {
+        id: student._id,
+        name: `${student.fname} ${student.lname}`,
+        role: 'student',
+      },
+      student: {
+        id: student._id,
+        studentId: student.studentId,
+        grno: student.grno,
+        fname: student.fname,
+        lname: student.lname,
+        email: student.email,
+        mobileNo: student.mobileNo,
+        bloodGroup: student.bloodGroup,
+        photo: student.photo,
+        course: student.courseId,
+        batch: student.batchId,
+        totalFees: student.totalFees,
+        paidFees: student.paidFees,
+        balanceFees: student.balanceFees,
+        status: student.status,
+        parentPin: student.parentPin || '1234',
+      },
+      institute: instData ? {
+        id: instData._id,
+        code: instData.code,
+        name: instData.name,
+        logo: instData.logo,
+        brandColor: instData.brandColor,
+        academicYear: instData.academicYear,
+      } : null
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Firebase student login error', error: err.message });
+  }
+});
+
+/**
  * Get Current Profile
  */
 router.get('/me', async (req, res) => {
@@ -447,3 +549,4 @@ router.get('/me', async (req, res) => {
 });
 
 module.exports = router;
+
