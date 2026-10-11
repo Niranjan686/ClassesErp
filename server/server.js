@@ -209,14 +209,16 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Initial startup connection
-connectDB().catch((err) => {
-  console.error('Initial DB connect attempt notice:', err.message);
-});
+// Initial startup connection (Local Node.js only; Vercel connects per request middleware)
+if (!process.env.VERCEL) {
+  connectDB().catch((err) => {
+    console.error('Initial DB connect attempt notice:', err.message);
+  });
+}
 
-// Start the server if run directly (Node.js)
+// Start the server if run directly (Node.js) - Never listen inside Vercel serverless functions
 const PORT = process.env.PORT || 5000;
-if (process.env.NODE_ENV !== 'test') {
+if (!process.env.VERCEL && process.env.NODE_ENV !== 'test') {
   server.listen(PORT, () => {
     console.log(`🚀 Multi-Tenant SaaS ERP Server & Socket.IO active on port ${PORT}`);
   });

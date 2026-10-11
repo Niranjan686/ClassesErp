@@ -8,17 +8,25 @@ const { authenticateAdmin, authorizeRoles } = require('../middleware/auth');
 const jwt = require('jsonwebtoken');
 const { JWT_SECRET } = require('../middleware/auth');
 
-// Storage Directories
-const UPLOADS_ROOT = path.join(__dirname, '../uploads');
+const os = require('os');
+
+// Storage Directories (Use os.tmpdir() in serverless environments like Vercel to avoid EROFS error)
+const UPLOADS_ROOT = process.env.VERCEL
+  ? path.join(os.tmpdir(), 'classtech_vault')
+  : path.join(__dirname, '../uploads');
 const VAULT_DIR = path.join(UPLOADS_ROOT, 'vault');
 const TEMP_CHUNKS_DIR = path.join(UPLOADS_ROOT, 'temp_chunks');
 
-// Ensure base directories exist
-if (!fs.existsSync(VAULT_DIR)) {
-  fs.mkdirSync(VAULT_DIR, { recursive: true });
-}
-if (!fs.existsSync(TEMP_CHUNKS_DIR)) {
-  fs.mkdirSync(TEMP_CHUNKS_DIR, { recursive: true });
+// Safely ensure base directories exist without crashing module load
+try {
+  if (!fs.existsSync(VAULT_DIR)) {
+    fs.mkdirSync(VAULT_DIR, { recursive: true });
+  }
+  if (!fs.existsSync(TEMP_CHUNKS_DIR)) {
+    fs.mkdirSync(TEMP_CHUNKS_DIR, { recursive: true });
+  }
+} catch (e) {
+  console.warn('Vault directory initialization notice:', e.message);
 }
 
 // Multer memory storage for chunk buffers (up to 15MB per chunk)
