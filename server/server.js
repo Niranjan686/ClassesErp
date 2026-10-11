@@ -44,18 +44,79 @@ io.on('connection', (socket) => {
   });
 });
 
+// Bulletproof CORS Configuration (Supports Vercel cross-origin deployments & mobile apps)
+const allowedOrigins = [
+  'https://classes-erp.vercel.app',
+  'https://classes-erp-i3yt.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://127.0.0.1:5173',
+  'http://localhost:8081',
+];
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps, curl, Postman)
+    if (!origin) return callback(null, true);
+    if (
+      allowedOrigins.includes(origin) ||
+      origin.endsWith('.vercel.app') ||
+      origin.includes('localhost')
+    ) {
+      return callback(null, true);
+    }
+    return callback(null, true); // Fallback: allow dynamically
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: [
+    'Origin',
+    'X-Requested-With',
+    'Content-Type',
+    'Accept',
+    'Authorization',
+    'X-CSRF-Token',
+    'Accept-Version',
+  ],
+  exposedHeaders: ['Content-Disposition', 'Content-Length'],
+  optionsSuccessStatus: 200,
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
+
+// Explicit Edge / Reverse Proxy Preflight & Header Middleware
+app.use((req, res, next) => {
+  const origin = req.headers.origin || '*';
+  res.header('Access-Control-Allow-Origin', origin);
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+  res.header(
+    'Access-Control-Allow-Headers',
+    'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-CSRF-Token, Accept-Version'
+  );
+
+  // Immediately resolve preflight OPTIONS requests without waiting for DB or subsequent middlewares
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  next();
+});
+
 // Security & Parsing Middlewares
-app.use(helmet({
-  crossOriginResourcePolicy: false,
-  contentSecurityPolicy: false,
-}));
-app.use(cors());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: false,
+    contentSecurityPolicy: false,
+  })
+);
 app.use(cookieParser());
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ extended: true, limit: '20mb' }));
 
-// Serverless DB Auto-Connect Middleware (Guarantees DB is ready before request executes)
+// Serverless DB Auto-Connect Middleware (Skip for OPTIONS preflight to prevent timeouts)
 app.use(async (req, res, next) => {
+  if (req.method === 'OPTIONS') return next();
   try {
     await connectDB();
   } catch (err) {
