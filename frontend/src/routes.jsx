@@ -53,6 +53,8 @@ const AppRoutes = () => {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/super-admin" element={<SuperAdminDashboard />} />
         <Route path="/superadmin" element={<SuperAdminDashboard />} />
+        <Route path="/super-admin/vault" element={<SuperAdminDashboard />} />
+        <Route path="/superadmin/vault" element={<SuperAdminDashboard />} />
         <Route path="/live-classes" element={<LiveClassStudio />} />
         <Route path="/study-notes" element={<NotesMaster />} />
         <Route path="/demo-schedule" element={<DemoScheduler />} />

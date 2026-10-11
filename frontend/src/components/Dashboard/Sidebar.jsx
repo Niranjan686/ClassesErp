@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Users, UserPlus, BookOpen, Layers, CheckCircle2,
   Calendar, CreditCard, Award, FileText, School, UserCheck, MessageSquare,
   BarChart3, LogOut, ChevronDown, ChevronRight, X, Smartphone, Sparkles,
-  ShieldCheck, HelpCircle, FileCheck
+  ShieldCheck, HelpCircle, FileCheck, HardDrive
 } from 'lucide-react';
 
 export const DRAWER_WIDTH = 256;
@@ -13,6 +13,9 @@ export const DRAWER_WIDTH = 256;
 const Sidebar = ({ mobileOpen, onToggleSidebar }) => {
   const location = useLocation();
   const navigate = useNavigate();
+
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const isSuperAdmin = user?.role === 'superadmin';
 
   // Accordion state
   const [openGroups, setOpenGroups] = useState({
@@ -105,6 +108,18 @@ const Sidebar = ({ mobileOpen, onToggleSidebar }) => {
           <div>
             <NavItem path="/dashboard" label="Overview Dashboard" icon={LayoutDashboard} />
           </div>
+
+          {/* Section: SuperAdmin Console */}
+          {isSuperAdmin && (
+            <div className="space-y-0.5 p-1.5 rounded-2xl bg-indigo-50/60 border border-indigo-100">
+              <div className="px-2.5 py-1 text-[10px] font-black text-indigo-700 uppercase tracking-wider flex items-center justify-between">
+                <span>SuperAdmin HQ</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-indigo-600 animate-pulse"></span>
+              </div>
+              <NavItem path="/super-admin?tab=institutes" label="Coaching Directory" icon={School} />
+              <NavItem path="/super-admin?tab=vault" label="Large File Vault" icon={HardDrive} badge="Chunked" />
+            </div>
+          )}
 
           {/* Section: Student Operations */}
           <div className="space-y-0.5">

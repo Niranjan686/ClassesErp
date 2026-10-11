@@ -3,6 +3,7 @@ const router = express.Router();
 const Attendance = require('../models/Attendance');
 const Student = require('../models/Students');
 const Batch = require('../models/Batch');
+const Institute = require('../models/Institute');
 const NotificationLog = require('../models/NotificationLog');
 const { sendPushNotification } = require('../utils/pushNotification');
 const { authenticateAdmin, authenticateStudent } = require('../middleware/auth');
@@ -92,6 +93,7 @@ router.post('/quick-punch', authenticateAdmin, async (req, res) => {
     const student = await Student.findOne({
       instituteId: req.instituteId,
       $or: [
+        { fingerprintId: cleanId },
         { rfid: cleanId },
         { studentId: cleanId },
         { grno: cleanId },
@@ -129,7 +131,7 @@ router.post('/quick-punch', authenticateAdmin, async (req, res) => {
       const records = allBatchStudents.map(s => ({
         studentId: s._id,
         status: s._id.toString() === student._id.toString() ? 'Present' : 'Absent',
-        mode: s._id.toString() === student._id.toString() ? 'QR' : 'Manual',
+        mode: s._id.toString() === student._id.toString() ? 'Biometric' : 'Manual',
         inTime: s._id.toString() === student._id.toString() ? nowTime : '',
       }));
 
@@ -143,12 +145,11 @@ router.post('/quick-punch', authenticateAdmin, async (req, res) => {
           totalStudents: allBatchStudents.length,
           presentCount: 1,
           absentCount: Math.max(0, allBatchStudents.length - 1),
-          markedBy: req.user.name,
-          markedById: req.user._id,
+          markedBy: req.user?.name || 'Biometric Scanner',
+          markedById: req.user?._id,
         });
         await attendance.save();
       } catch (dupErr) {
-        // Recover from concurrent creation
         attendance = await Attendance.findOne({ instituteId: req.instituteId, batchId, date: targetDate });
       }
     }
@@ -157,13 +158,13 @@ router.post('/quick-punch', authenticateAdmin, async (req, res) => {
       const recIndex = attendance.records.findIndex(r => r.studentId.toString() === student._id.toString());
       if (recIndex !== -1) {
         attendance.records[recIndex].status = 'Present';
-        attendance.records[recIndex].mode = 'QR';
+        attendance.records[recIndex].mode = 'Biometric';
         attendance.records[recIndex].inTime = nowTime;
       } else {
         attendance.records.push({
           studentId: student._id,
           status: 'Present',
-          mode: 'QR',
+          mode: 'Biometric',
           inTime: nowTime,
         });
       }
@@ -174,9 +175,9 @@ router.post('/quick-punch', authenticateAdmin, async (req, res) => {
       await attendance.save();
     }
 
-    // Trigger Instant Push Notification on Present (without time)
+    // Trigger Instant Push Notification on Present
     const pushTitle = '🎓 Attendance Verified: PRESENT ✅';
-    const pushBody = `Student ${student.fname} ${student.lname} has arrived at campus & marked PRESENT (${student.batchId.batchName}).`;
+    const pushBody = `Student ${student.fname} ${student.lname} marked PRESENT via Biometric scan (${student.batchId.batchName}).`;
     
     const notifLog = await sendPushNotification({
       instituteId: req.instituteId,
@@ -190,9 +191,24 @@ router.post('/quick-punch', authenticateAdmin, async (req, res) => {
         studentId: student._id,
         name: `${student.fname} ${student.lname}`,
         status: 'Present',
+        mode: 'Biometric',
         batchName: student.batchId.batchName,
       }
     });
+
+    // Broadcast attendance update via Socket.IO
+    if (req.app.get('io')) {
+      req.app.get('io').to(`inst_${req.instituteId}`).emit('biometric_punch_received', {
+        studentId: student._id,
+        name: `${student.fname} ${student.lname}`,
+        grno: student.grno,
+        rollno: student.rollno,
+        batchName: student.batchId.batchName,
+        status: 'Present',
+        inTime: nowTime,
+        mode: 'Biometric',
+      });
+    }
 
     res.json({
       success: true,
@@ -208,13 +224,196 @@ router.post('/quick-punch', authenticateAdmin, async (req, res) => {
         name: `${student.fname} ${student.lname}`,
         grno: student.grno,
         studentId: student.studentId,
+        fingerprintId: student.fingerprintId,
         batchName: student.batchId.batchName,
         photo: student.photo,
         inTime: nowTime,
         status: 'Present',
+        mode: 'Biometric',
       }
     });
   } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * Hardware / IoT Biometric Device Punch Endpoint
+ * Direct API endpoint for ESP32, Optical Fingerprint Sensor (R307/AS608), ZKTeco, or USB Daemon
+ * POST /api/attendance/biometric-punch
+ */
+router.post('/biometric-punch', async (req, res) => {
+  try {
+    const { instituteCode, instituteId, fingerprintId, identifier, deviceId, date, time } = req.body;
+    const cleanFingerId = String(fingerprintId || identifier || '').trim();
+
+    if (!cleanFingerId) {
+      return res.status(400).json({
+        success: false,
+        message: 'fingerprintId or identifier is required'
+      });
+    }
+
+    // Resolve Institute
+    let instDoc = null;
+    if (instituteId) {
+      instDoc = await Institute.findById(instituteId);
+    } else if (instituteCode) {
+      instDoc = await Institute.findOne({ code: new RegExp(`^${instituteCode.trim()}$`, 'i') });
+    }
+
+    if (!instDoc) {
+      return res.status(400).json({
+        success: false,
+        message: 'Valid instituteCode or instituteId is required for biometric punch'
+      });
+    }
+
+    const resolvedInstId = instDoc._id;
+    const targetDate = date || new Date().toISOString().split('T')[0];
+    const nowTime = time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+    // Look up student by fingerprintId, studentId, grno, or rfid
+    const student = await Student.findOne({
+      instituteId: resolvedInstId,
+      status: 'Active',
+      $or: [
+        { fingerprintId: cleanFingerId },
+        { studentId: cleanFingerId },
+        { grno: cleanFingerId },
+        { rfid: cleanFingerId },
+        { studentId: new RegExp(`^${cleanFingerId}$`, 'i') },
+        { grno: new RegExp(`^${cleanFingerId}$`, 'i') },
+      ]
+    }).populate('batchId', 'batchName batchCode timing').populate('courseId', 'courseName');
+
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: `No enrolled student matched biometric ID "${cleanFingerId}" in ${instDoc.name}`
+      });
+    }
+
+    if (!student.batchId) {
+      return res.status(400).json({
+        success: false,
+        message: `Student ${student.fname} ${student.lname} has no active batch assigned.`
+      });
+    }
+
+    const batchId = student.batchId._id;
+
+    let attendance = await Attendance.findOne({
+      instituteId: resolvedInstId,
+      batchId,
+      date: targetDate,
+    });
+
+    if (!attendance) {
+      const allBatchStudents = await Student.find({ instituteId: resolvedInstId, batchId, status: 'Active' });
+      const records = allBatchStudents.map(s => ({
+        studentId: s._id,
+        status: s._id.toString() === student._id.toString() ? 'Present' : 'Absent',
+        mode: s._id.toString() === student._id.toString() ? 'Biometric' : 'Manual',
+        inTime: s._id.toString() === student._id.toString() ? nowTime : '',
+      }));
+
+      try {
+        attendance = new Attendance({
+          instituteId: resolvedInstId,
+          batchId,
+          courseId: student.courseId?._id,
+          date: targetDate,
+          records,
+          totalStudents: allBatchStudents.length,
+          presentCount: 1,
+          absentCount: Math.max(0, allBatchStudents.length - 1),
+          markedBy: `Biometric Device (${deviceId || 'Scanner'})`,
+        });
+        await attendance.save();
+      } catch (dupErr) {
+        attendance = await Attendance.findOne({ instituteId: resolvedInstId, batchId, date: targetDate });
+      }
+    }
+
+    if (attendance) {
+      const recIndex = attendance.records.findIndex(r => r.studentId.toString() === student._id.toString());
+      if (recIndex !== -1) {
+        attendance.records[recIndex].status = 'Present';
+        attendance.records[recIndex].mode = 'Biometric';
+        attendance.records[recIndex].inTime = nowTime;
+      } else {
+        attendance.records.push({
+          studentId: student._id,
+          status: 'Present',
+          mode: 'Biometric',
+          inTime: nowTime,
+        });
+      }
+      attendance.presentCount = attendance.records.filter(r => r.status === 'Present').length;
+      attendance.absentCount = attendance.records.filter(r => r.status === 'Absent').length;
+      attendance.lateCount = attendance.records.filter(r => r.status === 'Late').length;
+      attendance.leaveCount = attendance.records.filter(r => r.status === 'Leave').length;
+      await attendance.save();
+    }
+
+    // Trigger Instant Push Notification
+    const pushTitle = '🎓 Attendance Verified: PRESENT ✅';
+    const pushBody = `Student ${student.fname} ${student.lname} scanned fingerprint & marked PRESENT (${student.batchId.batchName}) at ${nowTime}.`;
+    
+    sendPushNotification({
+      instituteId: resolvedInstId,
+      studentId: student._id,
+      recipientName: `${student.fname} ${student.lname}`,
+      recipientPhone: student.mobileNo || student.fatherMobileNo,
+      title: pushTitle,
+      message: pushBody,
+      triggerEvent: 'Attendance_Present',
+      data: {
+        studentId: student._id,
+        name: `${student.fname} ${student.lname}`,
+        status: 'Present',
+        mode: 'Biometric',
+        inTime: nowTime,
+        batchName: student.batchId.batchName,
+      }
+    }).catch(err => console.warn('Biometric push notification error:', err.message));
+
+    // Emit real-time Socket.IO event to all live dashboard clients
+    if (req.app.get('io')) {
+      req.app.get('io').to(`inst_${resolvedInstId}`).emit('biometric_punch_received', {
+        studentId: student._id,
+        name: `${student.fname} ${student.lname}`,
+        grno: student.grno,
+        rollno: student.rollno,
+        fingerprintId: student.fingerprintId,
+        batchName: student.batchId.batchName,
+        status: 'Present',
+        inTime: nowTime,
+        mode: 'Biometric',
+        deviceId: deviceId || 'SCANNER-1',
+      });
+    }
+
+    res.json({
+      success: true,
+      statusCode: 200,
+      message: `Biometric scan verified! ${student.fname} ${student.lname} marked PRESENT.`,
+      timestamp: nowTime,
+      data: {
+        studentId: student.studentId,
+        grno: student.grno,
+        rollno: student.rollno,
+        name: `${student.fname} ${student.lname}`,
+        fingerprintId: student.fingerprintId,
+        batch: student.batchId.batchName,
+        status: 'Present',
+        mode: 'Biometric',
+        inTime: nowTime,
+      }
+    });
+  } catch (error) {
+    console.error('Biometric punch API error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });

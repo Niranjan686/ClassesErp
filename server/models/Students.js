@@ -166,6 +166,12 @@ const studentSchema = new mongoose.Schema({
     default: '',
     trim: true,
   },
+  fingerprintId: {
+    type: String,
+    default: '',
+    trim: true,
+    index: true,
+  },
   bloodGroup: {
     type: String,
     enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'N/A'],

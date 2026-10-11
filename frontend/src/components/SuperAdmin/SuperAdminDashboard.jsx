@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams, useLocation } from 'react-router-dom';
 import {
   Box, Typography, Grid, Card, CardContent, Button, Chip,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,
@@ -7,13 +8,19 @@ import {
 } from '@mui/material';
 import {
   GraduationCap, School, BookOpen, Layers, Users, Plus, RefreshCw,
-  Trash2, ShieldCheck, CheckCircle2, Copy, Building2, Key, Mail, Phone, Lock, Sparkles
+  Trash2, ShieldCheck, CheckCircle2, Copy, Building2, Key, Mail, Phone, Lock, Sparkles,
+  HardDrive, UploadCloud
 } from 'lucide-react';
 import AdminLayout from '../Common/AdminLayout';
 import { PageTransition, SuccessCheckmark, triggerAcademicConfetti } from '../Common/MotionWrapper';
+import FileVaultManager from './FileVaultManager';
 import api from '../../api';
 
 const SuperAdminDashboard = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  const isVaultInitial = location.pathname.includes('vault') || searchParams.get('tab') === 'vault';
+  const [activeTab, setActiveTab] = useState(isVaultInitial ? 'vault' : 'institutes');
   const [institutes, setInstitutes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
@@ -135,8 +142,48 @@ const SuperAdminDashboard = () => {
           </div>
         </div>
 
-        {/* Large Prominent KPI Cards with Education Icons */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+        {/* SuperAdmin Navigation Tabs */}
+        <div className="flex flex-wrap items-center gap-3 mb-8 border-b border-slate-200 pb-4">
+          <button
+            onClick={() => {
+              setActiveTab('institutes');
+              setSearchParams({ tab: 'institutes' });
+            }}
+            className={`px-5 py-2.5 rounded-2xl font-black text-xs sm:text-sm flex items-center gap-2 transition-all ${
+              activeTab === 'institutes'
+                ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/25'
+                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+            }`}
+          >
+            <School className="w-4 h-4" />
+            Coaching Classes Directory ({institutes.length})
+          </button>
+
+          <button
+            onClick={() => {
+              setActiveTab('vault');
+              setSearchParams({ tab: 'vault' });
+            }}
+            className={`px-5 py-2.5 rounded-2xl font-black text-xs sm:text-sm flex items-center gap-2 transition-all ${
+              activeTab === 'vault'
+                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25'
+                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+            }`}
+          >
+            <HardDrive className="w-4 h-4" />
+            Chunked File Vault (Large Files)
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500 text-white">
+              Zero Timeout
+            </span>
+          </button>
+        </div>
+
+        {activeTab === 'vault' ? (
+          <FileVaultManager />
+        ) : (
+          <>
+            {/* Large Prominent KPI Cards with Education Icons */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
           
           {/* Card 1: Active Coaching Classes */}
           <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition-all flex items-center justify-between">
@@ -260,6 +307,8 @@ const SuperAdminDashboard = () => {
             </Table>
           </TableContainer>
         </div>
+          </>
+        )}
 
         {/* Create Coaching Class Modal */}
         <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="sm" fullWidth>

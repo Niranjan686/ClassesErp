@@ -10,7 +10,7 @@ const attendanceRecordSchema = new mongoose.Schema({
   inTime: { type: String, default: '' },
   mode: {
     type: String,
-    enum: ['Manual', 'QR', 'LiveClass'],
+    enum: ['Manual', 'QR', 'LiveClass', 'Biometric', 'RFID'],
     default: 'Manual',
   },
   remarks: { type: String, default: '' },

@@ -85,6 +85,7 @@ const dashboardRoutes = require('./routes/dashboardRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const staffRoutes = require('./routes/staffRoutes');
 const aiRoutes = require('./routes/aiRoutes');
+const fileVaultRoutes = require('./routes/fileVaultRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/institutes', instituteRoutes);
@@ -106,6 +107,7 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/staff', staffRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/vault', fileVaultRoutes);
 
 // Health check & Server Status endpoints (Awaits DB connection for serverless environments)
 app.get(['/', '/api/health', '/api/status', '/api/ping'], async (req, res) => {
