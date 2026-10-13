@@ -7,9 +7,11 @@ import {
   Download, Send, Eye, RefreshCw, Award, ArrowLeft, Phone
 } from 'lucide-react';
 import api from '../../api';
+import { useNotify } from '../Common/NotificationSystem';
 
 const StudentMobileApp = () => {
   const navigate = useNavigate();
+  const notify = useNotify();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [student, setStudent] = useState(null);
   const [institute, setInstitute] = useState(null);
@@ -136,11 +138,12 @@ const StudentMobileApp = () => {
       });
       if (res.data.success) {
         setPaySuccess(true);
+        notify.success('Payment Received', '₹5,000 processed successfully with instant ledger update.');
         fetchAppData(token);
         setTimeout(() => setPaySuccess(false), 4000);
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Payment simulation error');
+      notify.error('Payment Error', err.response?.data?.message || 'Payment simulation error');
     } finally {
       setLoading(false);
     }
@@ -329,7 +332,7 @@ const StudentMobileApp = () => {
 
               <div className="flex items-center gap-1">
                 <button
-                  onClick={() => alert(`QR Code: ${student?.grno}`)}
+                  onClick={() => notify.info('Student QR Identity', `Registered GR/ID: ${student?.grno || student?.studentId || 'Active'}`)}
                   className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-slate-200"
                 >
                   <QrCode className="w-4 h-4" />
@@ -550,7 +553,7 @@ const StudentMobileApp = () => {
                         <p className="text-[10px] text-slate-400 mt-0.5">{n.size} • {n.tag} • Dynamic Watermark</p>
                       </div>
                       <button
-                        onClick={() => alert(`Opening ${n.title} with security watermark: ${student?.fname} (${student?.studentId})`)}
+                        onClick={() => notify.info('Secure Study Document', `Opening ${n.title} with dynamic security watermark for ${student?.fname || 'Student'} (${student?.studentId || 'ID'})`)}
                         className="w-9 h-9 rounded-xl bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center shadow-md shadow-blue-500/25 shrink-0 transition-transform active:scale-95"
                       >
                         <Download className="w-4 h-4" />

@@ -58,8 +58,10 @@ const BatchMaster = () => {
                 api.get('/batches'),
                 api.get('/courses')
             ]);
-            setBatches(batchRes.data);
-            setCourses(courseRes.data);
+            const batchList = Array.isArray(batchRes.data) ? batchRes.data : (batchRes.data?.data || []);
+            const courseList = Array.isArray(courseRes.data) ? courseRes.data : (courseRes.data?.data || []);
+            setBatches(Array.isArray(batchList) ? batchList : []);
+            setCourses(Array.isArray(courseList) ? courseList : []);
         } catch (err) {
             setToast({ open: true, message: 'Failed to load batch data', severity: 'error' });
         } finally {
@@ -145,9 +147,10 @@ const BatchMaster = () => {
         }
     };
 
-    const filteredBatches = batches.filter(b => {
-        const matchesSearch = b.batchName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            b.batchCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const safeBatches = Array.isArray(batches) ? batches : [];
+    const filteredBatches = safeBatches.filter(b => {
+        const matchesSearch = (b.batchName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (b.batchCode || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
             (b.instructor && b.instructor.toLowerCase().includes(searchTerm.toLowerCase()));
         
         const courseIdStr = b.courseId?._id || b.courseId;

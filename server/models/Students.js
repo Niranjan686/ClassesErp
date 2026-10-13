@@ -129,6 +129,20 @@ const studentSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  academicHistory: [{
+    academicYear: String,
+    courseId: { type: mongoose.Schema.Types.ObjectId, ref: 'Course' },
+    batchId: { type: mongoose.Schema.Types.ObjectId, ref: 'Batch' },
+    courseName: String,
+    batchName: String,
+    progressionStatus: {
+      type: String,
+      enum: ['Promoted', 'Retained', 'Graduated', 'Withdrawn', 'Transferred'],
+      default: 'Promoted'
+    },
+    promotedDate: { type: Date, default: Date.now },
+    remarks: String,
+  }],
   referralSource: {
     type: String,
     default: 'Direct',

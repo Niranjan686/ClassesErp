@@ -45,7 +45,8 @@ const CourseMaster = () => {
         try {
             setLoading(true);
             const res = await api.get('/courses');
-            setCourses(res.data);
+            const list = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+            setCourses(Array.isArray(list) ? list : []);
         } catch (err) {
             setToast({ open: true, message: 'Failed to load courses', severity: 'error' });
         } finally {
@@ -121,9 +122,10 @@ const CourseMaster = () => {
         }
     };
 
-    const filteredCourses = courses.filter(c => {
-        const matchesSearch = c.courseName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            c.courseCode.toLowerCase().includes(searchTerm.toLowerCase());
+    const safeCourses = Array.isArray(courses) ? courses : [];
+    const filteredCourses = safeCourses.filter(c => {
+        const matchesSearch = (c.courseName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (c.courseCode || '').toLowerCase().includes(searchTerm.toLowerCase());
         const matchesCat = categoryFilter === 'ALL' || c.category === categoryFilter;
         return matchesSearch && matchesCat;
     });

@@ -45,16 +45,19 @@ const Reports = () => {
             setLoading(true);
             if (activeTab === 0) {
                 const res = await api.get(`/reports/daily-register?date=${selectedDate}&batchId=${selectedBatchId}`);
-                setDailyData(res.data);
+                const list = Array.isArray(res.data) ? res.data : (res.data?.data || res.data?.records || []);
+                setDailyData(Array.isArray(list) ? list : []);
             } else if (activeTab === 1) {
                 const res = await api.get('/reports/defaulters?threshold=75');
-                setDefaultersData(res.data);
+                const list = Array.isArray(res.data) ? res.data : (res.data?.defaulters || res.data?.data || []);
+                setDefaultersData(Array.isArray(list) ? list : []);
             } else if (activeTab === 2) {
                 const res = await api.get('/reports/student-directory');
-                setDirectoryData(res.data);
+                const list = Array.isArray(res.data) ? res.data : (res.data?.students || res.data?.data || []);
+                setDirectoryData(Array.isArray(list) ? list : []);
             } else if (activeTab === 3) {
                 const res = await api.get('/reports/financial-summary');
-                setFinancialData(res.data);
+                setFinancialData(res.data?.data || res.data || null);
             }
         } catch (err) {
             setToast({ open: true, message: 'Failed to fetch report data', severity: 'error' });
@@ -70,19 +73,23 @@ const Reports = () => {
     const handleExportCSV = () => {
         let headers = [];
         let rows = [];
-        let filename = 'Keerti_Report.csv';
+        let filename = 'ClassTech_Report.csv';
+
+        const safeDaily = Array.isArray(dailyData) ? dailyData : [];
+        const safeDefaulters = Array.isArray(defaultersData) ? defaultersData : [];
+        const safeDirectory = Array.isArray(directoryData) ? directoryData : [];
 
         if (activeTab === 0) {
             headers = ['GR No', 'Roll No', 'Student Name', 'Course', 'Batch', 'Timing', 'Status', 'In-Time', 'Mobile'];
-            rows = dailyData.map(d => [d.grno, d.rollno, `"${d.name}"`, d.course, d.batch, d.timing, d.status, d.inTime, d.mobileNo]);
+            rows = safeDaily.map(d => [d.grno || '', d.rollno || '', `"${d.name || ''}"`, d.course || '', d.batch || '', d.timing || '', d.status || '', d.inTime || '', d.mobileNo || '']);
             filename = `Daily_Attendance_${selectedDate}.csv`;
         } else if (activeTab === 1) {
             headers = ['GR No', 'Roll No', 'Student Name', 'Course', 'Batch', 'Total Sessions', 'Present Days', 'Attendance %', 'Mobile'];
-            rows = defaultersData.map(d => [d.grno, d.rollno, `"${d.name}"`, d.course, d.batch, d.totalSessions, d.presentDays, `${d.percentage}%`, d.mobileNo]);
+            rows = safeDefaulters.map(d => [d.grno || '', d.rollno || '', `"${d.name || ''}"`, d.course || '', d.batch || '', d.totalSessions || 0, d.presentDays ?? d.presentCount ?? 0, `${d.percentage || 0}%`, d.mobileNo || '']);
             filename = `Attendance_Defaulters_Below_75pct.csv`;
         } else if (activeTab === 2) {
             headers = ['GR No', 'Roll No', 'Student Name', 'Course', 'Batch', 'Total Fees', 'Paid Fees', 'Balance Fees', 'Contact', 'RFID'];
-            rows = directoryData.map(d => [d.grno, d.rollno, `"${d.name}"`, d.course, d.batch, d.totalFees, d.paidFees, d.balanceFees, d.mobileNo, d.rfid]);
+            rows = safeDirectory.map(d => [d.grno || '', d.rollno || '', `"${d.name || ''}"`, d.course || '', d.batch || '', d.totalFees || 0, d.paidFees || 0, d.balanceFees || 0, d.mobileNo || '', d.rfid || '']);
             filename = `Student_Directory_Master.csv`;
         }
 
@@ -203,7 +210,7 @@ const Reports = () => {
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
-                                        {dailyData.length === 0 ? (
+                                        {!Array.isArray(dailyData) || dailyData.length === 0 ? (
                                             <TableRow>
                                                 <TableCell colSpan={7} sx={{ textAlign: 'center', py: 4, color: '#64748b' }}>
                                                     No attendance logged for {selectedDate}.
@@ -212,13 +219,13 @@ const Reports = () => {
                                         ) : (
                                             dailyData.map((d, idx) => (
                                                 <TableRow key={idx} hover>
-                                                    <TableCell sx={{ fontWeight: 800 }}>#{d.rollno}</TableCell>
-                                                    <TableCell>{d.grno}</TableCell>
-                                                    <TableCell sx={{ fontWeight: 700 }}>{d.name}</TableCell>
-                                                    <TableCell>{d.batch} ({d.timing})</TableCell>
+                                                    <TableCell sx={{ fontWeight: 800 }}>#{d.rollno || 'N/A'}</TableCell>
+                                                    <TableCell>{d.grno || 'N/A'}</TableCell>
+                                                    <TableCell sx={{ fontWeight: 700 }}>{d.name || 'Unknown'}</TableCell>
+                                                    <TableCell>{d.batch || 'N/A'} {d.timing ? `(${d.timing})` : ''}</TableCell>
                                                     <TableCell>
                                                         <Chip
-                                                            label={d.status}
+                                                            label={d.status || 'N/A'}
                                                             size="small"
                                                             sx={{
                                                                 bgcolor: d.status === 'Present' ? '#dcfce7' : d.status === 'Absent' ? '#fee2e2' : '#e0f2fe',
@@ -228,7 +235,7 @@ const Reports = () => {
                                                         />
                                                     </TableCell>
                                                     <TableCell>{d.inTime || 'N/A'}</TableCell>
-                                                    <TableCell>{d.mobileNo}</TableCell>
+                                                    <TableCell>{d.mobileNo || 'N/A'}</TableCell>
                                                 </TableRow>
                                             ))
                                         )}
@@ -252,7 +259,7 @@ const Reports = () => {
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
-                                        {defaultersData.length === 0 ? (
+                                        {!Array.isArray(defaultersData) || defaultersData.length === 0 ? (
                                             <TableRow>
                                                 <TableCell colSpan={7} sx={{ textAlign: 'center', py: 4, color: '#16a34a', fontWeight: 700 }}>
                                                     🎉 Excellent! Zero students below 75% attendance threshold.
@@ -261,15 +268,15 @@ const Reports = () => {
                                         ) : (
                                             defaultersData.map((d, idx) => (
                                                 <TableRow key={idx} hover>
-                                                    <TableCell>{d.grno}</TableCell>
-                                                    <TableCell sx={{ fontWeight: 800 }}>{d.name}</TableCell>
-                                                    <TableCell>{d.course} • {d.batch}</TableCell>
-                                                    <TableCell>{d.totalSessions}</TableCell>
-                                                    <TableCell>{d.presentDays}</TableCell>
+                                                    <TableCell>{d.grno || 'N/A'}</TableCell>
+                                                    <TableCell sx={{ fontWeight: 800 }}>{d.name || 'Unknown'}</TableCell>
+                                                    <TableCell>{d.course || 'N/A'} • {d.batch || 'N/A'}</TableCell>
+                                                    <TableCell>{d.totalSessions ?? 0}</TableCell>
+                                                    <TableCell>{d.presentDays ?? d.presentCount ?? 0}</TableCell>
                                                     <TableCell>
-                                                        <Chip label={`${d.percentage}%`} size="small" sx={{ bgcolor: '#fee2e2', color: '#991b1b', fontWeight: 900 }} />
+                                                        <Chip label={`${d.percentage ?? 0}%`} size="small" sx={{ bgcolor: '#fee2e2', color: '#991b1b', fontWeight: 900 }} />
                                                     </TableCell>
-                                                    <TableCell>{d.mobileNo}</TableCell>
+                                                    <TableCell>{d.mobileNo || 'N/A'}</TableCell>
                                                 </TableRow>
                                             ))
                                         )}
@@ -293,27 +300,35 @@ const Reports = () => {
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
-                                        {directoryData.map((d, idx) => (
-                                            <TableRow key={idx} hover>
-                                                <TableCell sx={{ fontWeight: 800 }}>{d.grno}</TableCell>
-                                                <TableCell sx={{ fontWeight: 700 }}>{d.name}</TableCell>
-                                                <TableCell>{d.course}</TableCell>
-                                                <TableCell>{d.batch}</TableCell>
-                                                <TableCell>
-                                                    <Chip
-                                                        label={d.balanceFees === 0 ? 'Clear' : `₹${d.balanceFees}`}
-                                                        size="small"
-                                                        sx={{
-                                                            bgcolor: d.balanceFees === 0 ? '#dcfce7' : '#fee2e2',
-                                                            color: d.balanceFees === 0 ? '#166534' : '#991b1b',
-                                                            fontWeight: 800
-                                                        }}
-                                                    />
+                                        {!Array.isArray(directoryData) || directoryData.length === 0 ? (
+                                            <TableRow>
+                                                <TableCell colSpan={7} sx={{ textAlign: 'center', py: 4, color: '#64748b' }}>
+                                                    No students registered in the directory.
                                                 </TableCell>
-                                                <TableCell>{d.mobileNo}</TableCell>
-                                                <TableCell>{d.rfid || 'N/A'}</TableCell>
                                             </TableRow>
-                                        ))}
+                                        ) : (
+                                            directoryData.map((d, idx) => (
+                                                <TableRow key={idx} hover>
+                                                    <TableCell sx={{ fontWeight: 800 }}>{d.grno || 'N/A'}</TableCell>
+                                                    <TableCell sx={{ fontWeight: 700 }}>{d.name || 'Unknown'}</TableCell>
+                                                    <TableCell>{d.course || 'N/A'}</TableCell>
+                                                    <TableCell>{d.batch || 'N/A'}</TableCell>
+                                                    <TableCell>
+                                                        <Chip
+                                                            label={d.balanceFees === 0 ? 'Clear' : `₹${(d.balanceFees || 0).toLocaleString()}`}
+                                                            size="small"
+                                                            sx={{
+                                                                bgcolor: d.balanceFees === 0 ? '#dcfce7' : '#fee2e2',
+                                                                color: d.balanceFees === 0 ? '#166534' : '#991b1b',
+                                                                fontWeight: 800
+                                                            }}
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell>{d.mobileNo || 'N/A'}</TableCell>
+                                                    <TableCell>{d.rfid || 'N/A'}</TableCell>
+                                                </TableRow>
+                                            ))
+                                        )}
                                     </TableBody>
                                 </Table>
                             </TableContainer>
@@ -325,22 +340,56 @@ const Reports = () => {
                                     <Grid item xs={12} sm={4}>
                                         <Paper sx={{ p: 2.5, bgcolor: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '12px' }}>
                                             <Typography variant="caption" sx={{ color: '#0369a1', fontWeight: 800 }}>TOTAL EXPECTED</Typography>
-                                            <Typography variant="h4" fontWeight="900" color="#0369a1" my={0.5}>₹{financialData.totalExpected?.toLocaleString()}</Typography>
+                                            <Typography variant="h4" fontWeight="900" color="#0369a1" my={0.5}>₹{(financialData.totalExpected || 0).toLocaleString()}</Typography>
                                         </Paper>
                                     </Grid>
                                     <Grid item xs={12} sm={4}>
                                         <Paper sx={{ p: 2.5, bgcolor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '12px' }}>
                                             <Typography variant="caption" sx={{ color: '#166534', fontWeight: 800 }}>TOTAL COLLECTED</Typography>
-                                            <Typography variant="h4" fontWeight="900" color="#16a34a" my={0.5}>₹{financialData.totalCollected?.toLocaleString()}</Typography>
+                                            <Typography variant="h4" fontWeight="900" color="#16a34a" my={0.5}>₹{(financialData.totalCollected || 0).toLocaleString()}</Typography>
                                         </Paper>
                                     </Grid>
                                     <Grid item xs={12} sm={4}>
                                         <Paper sx={{ p: 2.5, bgcolor: '#fef2f2', border: '1px solid #fecaca', borderRadius: '12px' }}>
                                             <Typography variant="caption" sx={{ color: '#991b1b', fontWeight: 800 }}>TOTAL PENDING BALANCE</Typography>
-                                            <Typography variant="h4" fontWeight="900" color="#dc2626" my={0.5}>₹{financialData.totalBalance?.toLocaleString()}</Typography>
+                                            <Typography variant="h4" fontWeight="900" color="#dc2626" my={0.5}>₹{(financialData.totalBalance || 0).toLocaleString()}</Typography>
                                         </Paper>
                                     </Grid>
                                 </Grid>
+
+                                {financialData.courseBreakdown && financialData.courseBreakdown.length > 0 && (
+                                    <Box mt={3}>
+                                        <Typography variant="subtitle1" fontWeight="800" color="#0f172a" mb={1.5}>
+                                            Course-wise Collection Breakdown
+                                        </Typography>
+                                        <TableContainer sx={{ border: '1px solid #e0f2fe', borderRadius: '10px' }}>
+                                            <Table size="small">
+                                                <TableHead sx={{ backgroundColor: '#f8fafc' }}>
+                                                    <TableRow>
+                                                        <TableCell sx={{ fontWeight: 800, color: '#334155' }}>Course Name</TableCell>
+                                                        <TableCell sx={{ fontWeight: 800, color: '#334155' }}>Students</TableCell>
+                                                        <TableCell sx={{ fontWeight: 800, color: '#334155' }}>Expected</TableCell>
+                                                        <TableCell sx={{ fontWeight: 800, color: '#334155' }}>Collected</TableCell>
+                                                        <TableCell sx={{ fontWeight: 800, color: '#334155' }}>Balance Pending</TableCell>
+                                                    </TableRow>
+                                                </TableHead>
+                                                <TableBody>
+                                                    {financialData.courseBreakdown.map((cb, idx) => (
+                                                        <TableRow key={idx} hover>
+                                                            <TableCell sx={{ fontWeight: 700 }}>{cb.courseName}</TableCell>
+                                                            <TableCell>{cb.studentCount}</TableCell>
+                                                            <TableCell>₹{(cb.expected || 0).toLocaleString()}</TableCell>
+                                                            <TableCell sx={{ color: '#16a34a', fontWeight: 700 }}>₹{(cb.collected || 0).toLocaleString()}</TableCell>
+                                                            <TableCell sx={{ color: (cb.balance || 0) > 0 ? '#dc2626' : '#64748b', fontWeight: 700 }}>
+                                                                ₹{(cb.balance || 0).toLocaleString()}
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    ))}
+                                                </TableBody>
+                                            </Table>
+                                        </TableContainer>
+                                    </Box>
+                                )}
                             </Box>
                         )}
                     </Paper>

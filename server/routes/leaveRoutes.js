@@ -7,7 +7,7 @@ const Attendance = require('../models/Attendance');
 const { sendLeaveStatusNotification } = require('../utils/notifyService');
 
 // 1. Apply for Leave (Student or Staff)
-router.post('/apply', async (req, res) => {
+router.post(['/', '/apply'], async (req, res) => {
     try {
         const {
             applicantId,
@@ -24,7 +24,23 @@ router.post('/apply', async (req, res) => {
         } = req.body;
 
         if (!applicantId || !applicantType || !startDate || !endDate || !reason) {
-            return res.status(400).json({ message: 'Missing required leave fields (dates, applicant, reason)' });
+            return res.status(400).json({ success: false, message: 'Missing required leave fields (dates, applicant, reason)' });
+        }
+
+        // Resolve instituteId if not passed directly
+        let instituteId = req.body.instituteId || req.instituteId;
+        if (!instituteId) {
+            if (applicantType === 'Student') {
+                const stu = await Student.findById(applicantId);
+                if (stu) instituteId = stu.instituteId;
+            } else if (applicantType === 'Staff') {
+                const stf = await Staff.findById(applicantId);
+                if (stf) instituteId = stf.instituteId;
+            }
+        }
+
+        if (!instituteId) {
+            return res.status(400).json({ success: false, message: 'Could not determine Institute ID for applicant.' });
         }
 
         // Calculate total days
@@ -34,6 +50,7 @@ router.post('/apply', async (req, res) => {
         const totalDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
         const newLeave = new Leave({
+            instituteId,
             applicantId,
             applicantType,
             applicantName,
@@ -51,11 +68,12 @@ router.post('/apply', async (req, res) => {
 
         const savedLeave = await newLeave.save();
         res.status(201).json({
+            success: true,
             message: 'Leave application submitted successfully! Pending admin approval.',
             leave: savedLeave
         });
     } catch (error) {
-        res.status(400).json({ message: error.message });
+        res.status(400).json({ success: false, message: error.message });
     }
 });
 

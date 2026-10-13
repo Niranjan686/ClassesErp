@@ -147,6 +147,19 @@ const reportRoutes = require('./routes/reportRoutes');
 const staffRoutes = require('./routes/staffRoutes');
 const aiRoutes = require('./routes/aiRoutes');
 const fileVaultRoutes = require('./routes/fileVaultRoutes');
+const quizRoutes = require('./routes/quizRoutes');
+const timetableRoutes = require('./routes/timetableRoutes');
+const certificateRoutes = require('./routes/certificateRoutes');
+const transportRoutes = require('./routes/transportRoutes');
+const libraryRoutes = require('./routes/libraryRoutes');
+const inventoryRoutes = require('./routes/inventoryRoutes');
+const calendarRoutes = require('./routes/calendarRoutes');
+const gatePassRoutes = require('./routes/gatePassRoutes');
+const studentDocumentRoutes = require('./routes/studentDocumentRoutes');
+const alumniRoutes = require('./routes/alumniRoutes');
+const saasSubscriptionRoutes = require('./routes/saasSubscriptionRoutes');
+const expenseRoutes = require('./routes/expenseRoutes');
+const supportRoutes = require('./routes/supportRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/institutes', instituteRoutes);
@@ -169,6 +182,19 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/staff', staffRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/vault', fileVaultRoutes);
+app.use('/api/quizzes', quizRoutes);
+app.use('/api/timetable', timetableRoutes);
+app.use('/api/certificates', certificateRoutes);
+app.use('/api/transport', transportRoutes);
+app.use('/api/library', libraryRoutes);
+app.use('/api/inventory', inventoryRoutes);
+app.use('/api/calendar', calendarRoutes);
+app.use('/api/gatepass', gatePassRoutes);
+app.use('/api/documents', studentDocumentRoutes);
+app.use('/api/alumni', alumniRoutes);
+app.use('/api/saas', saasSubscriptionRoutes);
+app.use('/api/expenses', expenseRoutes);
+app.use('/api/support', supportRoutes);
 
 // Health check & Server Status endpoints (Awaits DB connection for serverless environments)
 app.get(['/', '/api/health', '/api/status', '/api/ping'], async (req, res) => {

@@ -58,9 +58,17 @@ const fileVaultSchema = new mongoose.Schema(
     lastDownloadedAt: {
       type: Date,
     },
+    gridfsId: {
+      type: mongoose.Schema.Types.ObjectId,
+    },
+    storageType: {
+      type: String,
+      enum: ['gridfs', 'disk', 'hybrid'],
+      default: 'hybrid',
+    },
     status: {
       type: String,
-      enum: ['Uploading', 'Ready', 'Failed'],
+      enum: ['Uploading', 'Ready', 'Failed', 'Expired'],
       default: 'Ready',
     },
     description: {

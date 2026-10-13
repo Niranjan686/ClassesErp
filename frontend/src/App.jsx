@@ -1,15 +1,18 @@
 import React from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
 import AppRoutes from './routes';
-import AIAssistant from './components/AI/AIAssistant';
 import CommandPalette from './components/Common/CommandPalette';
+import { NotificationProvider } from './components/Common/NotificationSystem';
+import GuidedOnboardingTour from './components/Common/GuidedOnboardingTour';
 
 function App() {
   return (
     <Router>
-      <AppRoutes />
-      <CommandPalette />
-      <AIAssistant />
+      <NotificationProvider>
+        <AppRoutes />
+        <CommandPalette />
+        <GuidedOnboardingTour />
+      </NotificationProvider>
     </Router>
   );
 }

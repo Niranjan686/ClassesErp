@@ -272,23 +272,61 @@ const FileVaultManager = () => {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  // Download Trigger
-  const handleDownload = (file) => {
+  // Download Trigger with robust response inspection (prevents downloading raw JSON error payloads)
+  const handleDownload = async (file) => {
     const token = localStorage.getItem('token');
     const downloadUrl = `${API_BASE_URL}/vault/download/${file._id}?token=${encodeURIComponent(token)}`;
     
-    // Create temporary link element and click to stream
-    const link = document.createElement('a');
-    link.href = downloadUrl;
-    link.setAttribute('download', file.fileName);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    showToast(`Initiating download for '${file.fileName}'...`, 'info');
 
-    showToast(`Downloading '${file.fileName}'...`, 'info');
-    setTimeout(() => {
-      fetchVaultFiles(); // Refresh download count
-    }, 2000);
+    try {
+      const response = await fetch(downloadUrl);
+
+      if (!response.ok) {
+        let errMessage = 'Download failed.';
+        try {
+          const errData = await response.json();
+          if (errData.message) errMessage = errData.message;
+        } catch (_) {}
+
+        showToast(errMessage, 'error');
+        fetchVaultFiles(); // Refresh status (e.g. if marked Expired)
+        return;
+      }
+
+      // Convert stream to blob and trigger real browser download
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', file.fileName);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      showToast(`'${file.fileName}' downloaded successfully!`, 'success');
+      setTimeout(() => {
+        fetchVaultFiles(); // Refresh download metrics
+      }, 1500);
+    } catch (netErr) {
+      console.error('Download fetch error:', netErr);
+      showToast(`Network error downloading '${file.fileName}': ${netErr.message}`, 'error');
+    }
+  };
+
+  // Sync Local Storage to GridFS
+  const handleSyncStorage = async () => {
+    try {
+      showToast('Scanning and synchronizing files to permanent cloud storage...', 'info');
+      const res = await api.post('/vault/sync-local');
+      if (res.data.success) {
+        showToast(res.data.message || 'Cloud storage synchronized!', 'success');
+        fetchVaultFiles();
+      }
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Sync failed', 'error');
+    }
   };
 
   // Delete file
@@ -601,6 +639,16 @@ const FileVaultManager = () => {
               <option value=".pdf">.pdf (Documents)</option>
               <option value=".sql">.sql (Database)</option>
             </select>
+
+            {/* Sync Cloud Storage Button */}
+            <button
+              onClick={handleSyncStorage}
+              className="px-3 py-2 rounded-2xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center gap-1.5 transition-colors border border-indigo-200 shrink-0"
+              title="Synchronize files to permanent cloud storage"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              Sync Storage
+            </button>
           </div>
         </div>
 
@@ -644,9 +692,20 @@ const FileVaultManager = () => {
                         </div>
                         <div>
                           <p className="font-bold text-slate-900 break-all">{file.fileName}</p>
-                          <span className="inline-block mt-0.5 px-2 py-0.5 rounded-md text-[10px] font-black bg-slate-100 text-slate-600 uppercase border border-slate-200">
-                            {file.extension || 'FILE'}
-                          </span>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-slate-100 text-slate-600 uppercase border border-slate-200">
+                              {file.extension || 'FILE'}
+                            </span>
+                            {file.status === 'Expired' ? (
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200" title="File was stored in temporary container that has expired. Please re-upload.">
+                                Re-upload Needed
+                              </span>
+                            ) : (
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200" title="Permanent persistent cloud storage">
+                                Cloud Permanent
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </td>

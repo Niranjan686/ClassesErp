@@ -11,9 +11,11 @@ import {
 } from 'lucide-react';
 import { AnimatedCounter, ProgressRing, LiveBadge, SuccessCheck } from '../../animations/useAnimations';
 import api from '../../api';
+import { useNotify } from '../Common/NotificationSystem';
 
 const ConsumerStudentPortal = () => {
   const navigate = useNavigate();
+  const notify = useNotify();
   const [activeTab, setActiveTab] = useState('home'); // home | courses | live | notes | attendance | fees | tests | homework | profile
   const [student, setStudent] = useState(null);
   const [institute, setInstitute] = useState(null);
@@ -136,11 +138,12 @@ const ConsumerStudentPortal = () => {
           spread: 80,
           origin: { y: 0.6 }
         });
+        notify.success('Payment Received', 'Fee payment successfully recorded with official receipt.');
         setPayModal(false);
         fetchStudentData();
       }
     } catch (err) {
-      alert('Payment processing failed. Please try again.');
+      notify.error('Payment Error', 'Payment processing failed. Please try again.');
     }
   };
 
@@ -150,12 +153,12 @@ const ConsumerStudentPortal = () => {
         date: new Date().toISOString().split('T')[0],
       });
       if (res.data.success) {
-        alert('🎉 Smart QR Check-in verified! Attendance recorded as PRESENT for today.');
+        notify.success('Smart QR Check-in Verified', 'Attendance recorded as PRESENT for today.');
         setQrModal(false);
         fetchStudentData();
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Check-in failed');
+      notify.error('Check-in Failed', err.response?.data?.message || 'Check-in verification failed.');
     }
   };
 
@@ -171,10 +174,10 @@ const ConsumerStudentPortal = () => {
         batchId: student.batch?._id || student.batch,
         ...leaveForm,
       });
-      alert('Leave application submitted to institute admin for approval.');
+      notify.success('Leave Submitted', 'Application sent to institute administration for approval.');
       setLeaveModal(false);
     } catch (err) {
-      alert('Failed to submit leave');
+      notify.error('Submission Failed', 'Failed to submit leave application. Please check all fields.');
     }
   };
 

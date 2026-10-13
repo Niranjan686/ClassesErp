@@ -3,8 +3,10 @@ const router = express.Router();
 const Attendance = require('../models/Attendance');
 const Student = require('../models/Students');
 const Batch = require('../models/Batch');
+const Staff = require('../models/Staff');
 const Institute = require('../models/Institute');
 const NotificationLog = require('../models/NotificationLog');
+const { BiometricDevice, RawDeviceEvent } = require('../models/BiometricDevice');
 const { sendPushNotification } = require('../utils/pushNotification');
 const { authenticateAdmin, authenticateStudent } = require('../middleware/auth');
 
@@ -755,9 +757,294 @@ router.get('/notifications/student-stream', async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(10);
 
+    res.json({ success: true, data: logs });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * ---------------- BIOMETRIC & RFID HARDWARE INTEGRATIONS ----------------
+ */
+
+// 1. List Registered Biometric / RFID Devices
+router.get('/devices', authenticateAdmin, async (req, res) => {
+  try {
+    const devices = await BiometricDevice.find({ instituteId: req.instituteId }).sort({ createdAt: -1 });
+    res.json({ success: true, data: devices });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// 2. Register New Attendance Hardware Device
+router.post('/devices', authenticateAdmin, async (req, res) => {
+  try {
+    const { deviceId, deviceName, deviceModel, deviceType, location, ipAddress, port, duplicatePunchThresholdMinutes } = req.body;
+    const device = new BiometricDevice({
+      instituteId: req.instituteId,
+      deviceId: (deviceId || '').toUpperCase(),
+      deviceName,
+      deviceModel,
+      deviceType,
+      location,
+      ipAddress,
+      port: port || 4370,
+      duplicatePunchThresholdMinutes: Number(duplicatePunchThresholdMinutes) || 5,
+      status: 'Online',
+      lastHeartbeat: new Date(),
+    });
+
+    const saved = await device.save();
+    res.status(201).json({ success: true, message: 'Hardware device registered successfully', data: saved });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+});
+
+// 3. Device Heartbeat
+router.post('/devices/:deviceId/heartbeat', async (req, res) => {
+  try {
+    const device = await BiometricDevice.findOneAndUpdate(
+      { deviceId: req.params.deviceId.toUpperCase() },
+      { status: 'Online', lastHeartbeat: new Date() },
+      { new: true }
+    );
+    if (!device) return res.status(404).json({ success: false, message: 'Device not registered' });
+    res.json({ success: true, status: 'Device Online' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// 4. Raw Attendance Event Ingestion & Deduplication Pipeline
+router.post('/device-event', async (req, res) => {
+  try {
+    const { deviceId, identifier, eventTimestamp, punchType = 'IN' } = req.body;
+    const cleanId = (identifier || '').trim();
+    const cleanDev = (deviceId || '').toUpperCase().trim();
+
+    if (!cleanId || !cleanDev) {
+      return res.status(400).json({ success: false, message: 'deviceId and identifier (card / ID / phone) are required.' });
+    }
+
+    const device = await BiometricDevice.findOne({ deviceId: cleanDev });
+    if (!device) {
+      return res.status(404).json({ success: false, message: `Hardware device ${cleanDev} is not registered in ERP.` });
+    }
+
+    device.lastHeartbeat = new Date();
+    await device.save();
+
+    const timestamp = eventTimestamp ? new Date(eventTimestamp) : new Date();
+    const thresholdMinutes = device.duplicatePunchThresholdMinutes || 5;
+    const cutoffTime = new Date(timestamp.getTime() - thresholdMinutes * 60 * 1000);
+
+    // Duplicate Punch Prevention: check if identical identifier punched recently on this institute's devices
+    const recentPunch = await RawDeviceEvent.findOne({
+      instituteId: device.instituteId,
+      identifier: cleanId,
+      eventTimestamp: { $gte: cutoffTime }
+    });
+
+    if (recentPunch) {
+      const duplicateLog = new RawDeviceEvent({
+        instituteId: device.instituteId,
+        deviceId: cleanDev,
+        identifier: cleanId,
+        eventTimestamp: timestamp,
+        punchType,
+        processingStatus: 'Duplicate Ignored',
+        reconciledPersonName: recentPunch.reconciledPersonName,
+        reconciledPersonId: recentPunch.reconciledPersonId,
+        reconciledPersonType: recentPunch.reconciledPersonType,
+        errorMessage: `Punch ignored: Already punched ${Math.round((timestamp - recentPunch.eventTimestamp) / 1000)} seconds ago (Threshold: ${thresholdMinutes}m).`,
+      });
+      await duplicateLog.save();
+
+      return res.json({
+        success: true,
+        message: 'Duplicate punch ignored (within debounce threshold)',
+        status: 'Duplicate Ignored',
+        person: recentPunch.reconciledPersonName,
+      });
+    }
+
+    // Reconciliation Engine: Match identifier with Student or Staff
+    const student = await Student.findOne({
+      instituteId: device.instituteId,
+      $or: [
+        { rfid: cleanId },
+        { fingerprintId: cleanId },
+        { studentId: cleanId },
+        { grno: cleanId },
+        { mobileNo: cleanId },
+      ]
+    });
+
+    let personName = 'Unknown';
+    let personType = 'Unknown';
+    let personId = null;
+
+    const todayDate = timestamp.toISOString().split('T')[0];
+    const timeStr = timestamp.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+
+    if (student) {
+      personType = 'Student';
+      personId = student._id;
+      personName = `${student.fname} ${student.lname}`;
+
+      // Update Attendance document for student's batch
+      if (student.batchId) {
+        let attDoc = await Attendance.findOne({
+          instituteId: device.instituteId,
+          batchId: student.batchId,
+          date: todayDate,
+        });
+
+        if (!attDoc) {
+          attDoc = new Attendance({
+            instituteId: device.instituteId,
+            batchId: student.batchId,
+            date: todayDate,
+            takenBy: `${device.deviceName} (${device.location})`,
+            records: [],
+          });
+        }
+
+        const existingRecord = attDoc.records.find(r => r.studentId.toString() === student._id.toString());
+        if (existingRecord) {
+          existingRecord.status = 'Present';
+          if (!existingRecord.inTime) existingRecord.inTime = timeStr;
+          existingRecord.mode = 'RFID / Biometric Terminal';
+          existingRecord.remarks = `Punched at ${cleanDev} (${device.location})`;
+        } else {
+          attDoc.records.push({
+            studentId: student._id,
+            status: 'Present',
+            inTime: timeStr,
+            mode: 'RFID / Biometric Terminal',
+            remarks: `Punched at ${cleanDev} (${device.location})`,
+          });
+        }
+
+        // Recalculate summary totals
+        attDoc.presentCount = attDoc.records.filter(r => r.status === 'Present').length;
+        attDoc.absentCount = attDoc.records.filter(r => r.status === 'Absent').length;
+        attDoc.lateCount = attDoc.records.filter(r => r.status === 'Late').length;
+        attDoc.leaveCount = attDoc.records.filter(r => r.status === 'Leave').length;
+
+        await attDoc.save();
+
+        // Emit real-time notification
+        if (req.app.get('io')) {
+          req.app.get('io').to(`inst_${device.instituteId}`).emit('attendance_punch', {
+            studentName: personName,
+            time: timeStr,
+            device: device.deviceName,
+            location: device.location,
+          });
+        }
+      }
+    } else {
+      // Check Staff
+      const staffMember = await Staff.findOne({
+        instituteId: device.instituteId,
+        $or: [
+          { phone: cleanId },
+          { staffId: cleanId },
+        ]
+      });
+
+      if (staffMember) {
+        personType = 'Staff';
+        personId = staffMember._id;
+        personName = staffMember.name;
+      }
+    }
+
+    const eventStatus = personId ? 'Processed' : 'Unmatched Identifier';
+
+    const eventLog = new RawDeviceEvent({
+      instituteId: device.instituteId,
+      deviceId: cleanDev,
+      identifier: cleanId,
+      eventTimestamp: timestamp,
+      punchType,
+      processingStatus: eventStatus,
+      reconciledPersonType: personType,
+      reconciledPersonId: personId,
+      reconciledPersonName: personName,
+      errorMessage: personId ? null : `Identifier "${cleanId}" not mapped to any registered student or staff.`,
+    });
+
+    await eventLog.save();
+
     res.json({
       success: true,
-      data: logs,
+      message: personId ? `Attendance recorded for ${personName} (${personType}) at ${timeStr}` : `Punch logged but identifier "${cleanId}" is unrecognized`,
+      status: eventStatus,
+      reconciledPerson: {
+        id: personId,
+        name: personName,
+        type: personType,
+        time: timeStr,
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// 5. Raw Event Logs & Device Audit Trail
+router.get('/device-events', authenticateAdmin, async (req, res) => {
+  try {
+    const query = { instituteId: req.instituteId };
+    if (req.query.status && req.query.status !== 'ALL') query.processingStatus = req.query.status;
+    if (req.query.deviceId) query.deviceId = req.query.deviceId.toUpperCase();
+
+    const events = await RawDeviceEvent.find(query).sort({ eventTimestamp: -1 }).limit(100);
+    res.json({ success: true, data: events });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// 6. Student Attendance History
+router.get('/student-history/:studentId', async (req, res) => {
+  try {
+    const student = await Student.findById(req.params.studentId);
+    if (!student) return res.status(404).json({ success: false, message: 'Student not found' });
+
+    const attendanceDocs = await Attendance.find({
+      instituteId: student.instituteId,
+      'records.studentId': student._id
+    }).sort({ date: -1 });
+
+    const history = attendanceDocs.map(d => {
+      const rec = d.records.find(r => r.studentId.toString() === student._id.toString());
+      return {
+        date: d.date,
+        status: rec?.status || 'Unknown',
+        inTime: rec?.inTime || '',
+        mode: rec?.mode || 'Manual',
+        remarks: rec?.remarks || ''
+      };
+    });
+
+    const presentCount = history.filter(h => h.status === 'Present' || h.status === 'Late').length;
+    const totalCount = history.length;
+    const percentage = totalCount > 0 ? Math.round((presentCount / totalCount) * 100) : 0;
+
+    res.json({
+      success: true,
+      data: {
+        totalDays: totalCount,
+        presentDays: presentCount,
+        absentDays: totalCount - presentCount,
+        percentage,
+        history
+      }
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

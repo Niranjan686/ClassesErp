@@ -97,6 +97,15 @@ const Navbar = ({ onToggleSidebar }) => {
           <Smartphone className="w-3.5 h-3.5" />
           <span>Student App</span>
         </Link>
+        {/* Guided Onboarding Tour Trigger */}
+        <button
+          onClick={() => window.dispatchEvent(new CustomEvent('restart-classtech-tour'))}
+          className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-[#4338CA] bg-[#EEF2FF]/80 hover:bg-[#E0E7FF] border border-[#E0E7FF] transition-all"
+          title="Start interactive platform tour"
+        >
+          <Sparkles className="w-3.5 h-3.5 text-[#4338CA] animate-pulse" />
+          <span>Tour</span>
+        </button>
 
         {/* Notifications Popover */}
         <div className="relative">
@@ -194,6 +203,17 @@ const Navbar = ({ onToggleSidebar }) => {
                     <span>Admin Dashboard</span>
                   </Link>
                 )}
+
+                <button
+                  onClick={() => {
+                    setUserMenuOpen(false);
+                    window.dispatchEvent(new CustomEvent('restart-classtech-tour'));
+                  }}
+                  className="w-full flex items-center gap-2 p-2 rounded-xl text-[#172033] hover:bg-slate-50 hover:text-[#4338CA] font-semibold transition-colors text-left"
+                >
+                  <Sparkles className="w-4 h-4 text-[#4338CA]" />
+                  <span>Interactive Tour</span>
+                </button>
 
                 <Link
                   to="/"

@@ -26,6 +26,24 @@ import LiveClassStudio from './components/LiveClasses/LiveClassStudio';
 import NotesMaster from './components/Notes/NotesMaster';
 import DemoScheduler from './components/Demos/DemoScheduler';
 
+// Enterprise & Advanced Modules
+import TimetableManagement from './components/Enterprise/TimetableManagement';
+import CertificateManagement from './components/Enterprise/CertificateManagement';
+import TransportManagement from './components/Enterprise/TransportManagement';
+import LibraryManagement from './components/Enterprise/LibraryManagement';
+import InventoryManagement from './components/Enterprise/InventoryManagement';
+import CalendarPTMManagement from './components/Enterprise/CalendarPTMManagement';
+import CommunicationCentre from './components/Enterprise/CommunicationCentre';
+import GatePassManagement from './components/Enterprise/GatePassManagement';
+import BiometricsManagement from './components/Enterprise/BiometricsManagement';
+import DocumentCompliance from './components/Enterprise/DocumentCompliance';
+import AlumniManagement from './components/Enterprise/AlumniManagement';
+import SaaSBillingPlans from './components/Enterprise/SaaSBillingPlans';
+import ExpenseCashbook from './components/Enterprise/ExpenseCashbook';
+import SupportHealthTelemetry from './components/Enterprise/SupportHealthTelemetry';
+import QuizLMSManagement from './components/Enterprise/QuizLMSManagement';
+import StaffPayrollManagement from './components/Enterprise/StaffPayrollManagement';
+
 const AppRoutes = () => {
   const location = useLocation();
 
@@ -71,6 +89,24 @@ const AppRoutes = () => {
         <Route path="/complaints" element={<ComplaintManagement />} />
         <Route path="/enquiries" element={<EnquiryManagement />} />
         <Route path="/reports" element={<Reports />} />
+
+        {/* Enterprise Operations & Logistics */}
+        <Route path="/timetable" element={<TimetableManagement />} />
+        <Route path="/certificates" element={<CertificateManagement />} />
+        <Route path="/transport" element={<TransportManagement />} />
+        <Route path="/library" element={<LibraryManagement />} />
+        <Route path="/inventory" element={<InventoryManagement />} />
+        <Route path="/calendar" element={<CalendarPTMManagement />} />
+        <Route path="/announcements" element={<CommunicationCentre />} />
+        <Route path="/gatepass" element={<GatePassManagement />} />
+        <Route path="/biometrics" element={<BiometricsManagement />} />
+        <Route path="/documents" element={<DocumentCompliance />} />
+        <Route path="/alumni" element={<AlumniManagement />} />
+        <Route path="/saas-billing" element={<SaaSBillingPlans />} />
+        <Route path="/expenses" element={<ExpenseCashbook />} />
+        <Route path="/support" element={<SupportHealthTelemetry />} />
+        <Route path="/quizzes" element={<QuizLMSManagement />} />
+        <Route path="/payroll" element={<StaffPayrollManagement />} />
 
         {/* Default redirect */}
         <Route path="*" element={<Navigate to="/" replace />} />

@@ -5,7 +5,9 @@ import {
   LayoutDashboard, Users, UserPlus, BookOpen, Layers, CheckCircle2,
   Calendar, CreditCard, Award, FileText, School, UserCheck, MessageSquare,
   BarChart3, LogOut, ChevronDown, ChevronRight, X, Smartphone, Sparkles,
-  ShieldCheck, HelpCircle, FileCheck, HardDrive
+  ShieldCheck, HelpCircle, FileCheck, HardDrive, Bus, Book, Package,
+  CalendarDays, Megaphone, ShieldAlert, Fingerprint, DollarSign, Activity,
+  LifeBuoy, GraduationCap, DollarSign as CashIcon, Briefcase
 } from 'lucide-react';
 
 export const DRAWER_WIDTH = 256;
@@ -23,7 +25,8 @@ const Sidebar = ({ mobileOpen, onToggleSidebar }) => {
     academics: true,
     attendance: true,
     finance: true,
-    reports: false,
+    campus: false,
+    admin: false,
   });
 
   const toggleGroup = (key) => {
@@ -105,7 +108,7 @@ const Sidebar = ({ mobileOpen, onToggleSidebar }) => {
         <div className="p-3 space-y-3.5 max-h-[calc(100vh-140px)] overflow-y-auto">
           
           {/* Main Dashboard */}
-          <div>
+          <div id="nav-dashboard">
             <NavItem path="/dashboard" label="Overview Dashboard" icon={LayoutDashboard} />
           </div>
 
@@ -122,7 +125,7 @@ const Sidebar = ({ mobileOpen, onToggleSidebar }) => {
           )}
 
           {/* Section: Student Operations */}
-          <div className="space-y-0.5">
+          <div className="space-y-0.5" id="nav-students">
             <button
               onClick={() => toggleGroup('students')}
               className="w-full flex items-center justify-between px-3 py-1 text-[10px] font-bold text-[#64748B] uppercase tracking-wider hover:text-[#172033]"
@@ -134,66 +137,116 @@ const Sidebar = ({ mobileOpen, onToggleSidebar }) => {
               <div className="space-y-0.5 pl-1">
                 <NavItem path="/students" label="Student Directory" icon={Users} />
                 <NavItem path="/student-master" label="Add Student" icon={UserPlus} />
+                <NavItem path="/documents" label="Document Compliance" icon={ShieldCheck} />
+                <NavItem path="/alumni" label="Alumni Network" icon={GraduationCap} />
               </div>
             )}
           </div>
 
-          {/* Section: Attendance Engine */}
-          <div className="space-y-0.5">
+          {/* Section: Attendance & Access Control */}
+          <div className="space-y-0.5" id="nav-attendance">
             <button
               onClick={() => toggleGroup('attendance')}
               className="w-full flex items-center justify-between px-3 py-1 text-[10px] font-bold text-[#64748B] uppercase tracking-wider hover:text-[#172033]"
             >
-              <span>Attendance Engine</span>
+              <span>Attendance & Biometrics</span>
               {openGroups.attendance ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
             </button>
             {openGroups.attendance && (
               <div className="space-y-0.5 pl-1">
                 <NavItem path="/attendance-entry" label="Daily Batch Register" icon={CheckCircle2} />
                 <NavItem path="/attendance-monthly" label="Monthly Matrix" icon={Calendar} />
+                <NavItem path="/biometrics" label="Hardware Terminals" icon={Fingerprint} badge="IoT" />
+                <NavItem path="/gatepass" label="Visitor & Gate Pass" icon={ShieldAlert} />
               </div>
             )}
           </div>
 
-          {/* Section: Academic Masters */}
+          {/* Section: Academic Masters & LMS */}
           <div className="space-y-0.5">
             <button
               onClick={() => toggleGroup('academics')}
               className="w-full flex items-center justify-between px-3 py-1 text-[10px] font-bold text-[#64748B] uppercase tracking-wider hover:text-[#172033]"
             >
-              <span>Academic Masters</span>
+              <span>Academics & LMS</span>
               {openGroups.academics ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
             </button>
             {openGroups.academics && (
               <div className="space-y-0.5 pl-1">
                 <NavItem path="/course-master" label="Course Management" icon={BookOpen} />
                 <NavItem path="/batch-master" label="Batch Schedules" icon={Layers} />
+                <NavItem path="/timetable" label="Class Timetable" icon={CalendarDays} />
+                <NavItem path="/quizzes" label="LMS Quizzes & Tests" icon={Award} badge="New" />
                 <NavItem path="/marks-entry" label="Marks & Report Cards" icon={Award} />
+                <NavItem path="/certificates" label="Certificates & TC" icon={FileCheck} />
                 <NavItem path="/study-notes" label="Study Notes & PDFs" icon={FileText} />
+                <NavItem path="/live-classes" label="Live Classroom Studio" icon={Sparkles} badge="Live" />
               </div>
             )}
           </div>
 
-          {/* Section: Fees & Staff */}
-          <div className="space-y-0.5">
+          {/* Section: Finance & Billing */}
+          <div className="space-y-0.5" id="nav-fees">
             <button
               onClick={() => toggleGroup('finance')}
               className="w-full flex items-center justify-between px-3 py-1 text-[10px] font-bold text-[#64748B] uppercase tracking-wider hover:text-[#172033]"
             >
-              <span>Finance & Staff</span>
+              <span>Finance & Accounts</span>
               {openGroups.finance ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
             </button>
             {openGroups.finance && (
               <div className="space-y-0.5 pl-1">
                 <NavItem path="/fee-management" label="Fee Ledger & Invoices" icon={CreditCard} />
+                <NavItem path="/expenses" label="Expenses & Cashbook" icon={CashIcon} />
+                <NavItem path="/payroll" label="Staff Payroll & Slips" icon={Briefcase} />
+                <NavItem path="/saas-billing" label="SaaS Subscription" icon={DollarSign} badge="Pro" />
+              </div>
+            )}
+          </div>
+
+          {/* Section: Campus Logistics */}
+          <div className="space-y-0.5">
+            <button
+              onClick={() => toggleGroup('campus')}
+              className="w-full flex items-center justify-between px-3 py-1 text-[10px] font-bold text-[#64748B] uppercase tracking-wider hover:text-[#172033]"
+            >
+              <span>Campus & Logistics</span>
+              {openGroups.campus ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+            </button>
+            {openGroups.campus && (
+              <div className="space-y-0.5 pl-1">
+                <NavItem path="/transport" label="Transport & Fleet" icon={Bus} />
+                <NavItem path="/library" label="Library Management" icon={Book} />
+                <NavItem path="/inventory" label="Inventory & Assets" icon={Package} />
+                <NavItem path="/calendar" label="Calendar & PTMs" icon={CalendarDays} />
+                <NavItem path="/announcements" label="Circulars & Notice" icon={Megaphone} />
+              </div>
+            )}
+          </div>
+
+          {/* Section: Administration & CRM */}
+          <div className="space-y-0.5">
+            <button
+              onClick={() => toggleGroup('admin')}
+              className="w-full flex items-center justify-between px-3 py-1 text-[10px] font-bold text-[#64748B] uppercase tracking-wider hover:text-[#172033]"
+            >
+              <span>Administration & CRM</span>
+              {openGroups.admin ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+            </button>
+            {openGroups.admin && (
+              <div className="space-y-0.5 pl-1">
                 <NavItem path="/staff-master" label="Staff & Faculty" icon={UserCheck} />
+                <NavItem path="/leave-management" label="Staff & Student Leaves" icon={FileCheck} />
                 <NavItem path="/enquiries" label="Enquiries CRM" icon={MessageSquare} />
+                <NavItem path="/demo-schedule" label="Demo Scheduler" icon={Calendar} />
+                <NavItem path="/complaints" label="Grievance Helpdesk" icon={HelpCircle} />
+                <NavItem path="/support" label="Support & Telemetry" icon={LifeBuoy} />
               </div>
             )}
           </div>
 
           {/* Section: Reports */}
-          <div>
+          <div id="nav-reports">
             <NavItem path="/reports" label="Analytics & Reports" icon={BarChart3} />
           </div>
 

@@ -1,0 +1,46 @@
+{
+  "timestamp": "2026-10-11T21:02:33.131Z",
+  "totalTests": 0,
+  "passed": 0,
+  "failed": 0,
+  "blocked": 0,
+  "bugsCount": 2,
+  "pageErrorsCount": 10,
+  "results": [],
+  "bugs": [
+    {
+      "id": "BUG-001",
+      "module": "Authentication",
+      "page": "/login",
+      "feature": "Validation message",
+      "severity": "Medium",
+      "steps": "Submit invalid credentials",
+      "expected": "Error banner shown",
+      "actual": "No error banner detected",
+      "consoleError": ""
+    },
+    {
+      "id": "BUG-002",
+      "module": "Authentication",
+      "page": "/login",
+      "feature": "Admin Login Redirect",
+      "severity": "Critical",
+      "steps": "Submit valid admin credentials",
+      "expected": "Redirect to /dashboard",
+      "actual": "Current URL is http://localhost:5173/login",
+      "consoleError": ""
+    }
+  ],
+  "pageErrors": [
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  ]
+}

@@ -126,10 +126,10 @@ const EnquiryManagement = () => {
                 api.get('/batches')
             ]);
 
-            setEnquiries(enqRes.data);
-            setInsights(insRes.data);
-            setCourses(crsRes.data);
-            setBatches(batRes.data);
+            setEnquiries(Array.isArray(enqRes.data) ? enqRes.data : (enqRes.data?.data || []));
+            setInsights(insRes.data?.data || insRes.data || null);
+            setCourses(Array.isArray(crsRes.data) ? crsRes.data : (crsRes.data?.data || []));
+            setBatches(Array.isArray(batRes.data) ? batRes.data : (batRes.data?.data || []));
         } catch (err) {
             setToast({ open: true, message: 'Failed to load inquiry CRM data', severity: 'error' });
         } finally {
@@ -264,10 +264,11 @@ const EnquiryManagement = () => {
         document.body.removeChild(link);
     };
 
-    const filteredEnquiries = enquiries.filter(e => {
-        const matchesSearch = e.candidateName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            e.mobileNo.includes(searchTerm) ||
-            e.courseName.toLowerCase().includes(searchTerm.toLowerCase());
+    const safeEnquiries = Array.isArray(enquiries) ? enquiries : [];
+    const filteredEnquiries = safeEnquiries.filter(e => {
+        const matchesSearch = (e.candidateName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (e.mobileNo || '').includes(searchTerm) ||
+            (e.courseName || '').toLowerCase().includes(searchTerm.toLowerCase());
         return matchesSearch;
     });
 

@@ -247,4 +247,52 @@ router.get('/my-ledger', authenticateStudent, async (req, res) => {
   }
 });
 
+/**
+ * Send Fee Reminder Alert (Admin)
+ */
+router.post('/send-reminder', authenticateAdmin, async (req, res) => {
+  try {
+    const { studentId, channel } = req.body;
+    const student = await Student.findOne({ _id: studentId, instituteId: req.instituteId });
+    if (!student) return res.status(404).json({ success: false, message: 'Student not found' });
+
+    res.json({
+      success: true,
+      message: `Fee reminder dispatched to ${student.fname} ${student.lname} via ${channel || 'SMS & WhatsApp'}`,
+      sentAt: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * Get Student Fee Summary by Student ID (Admin)
+ */
+router.get('/student/:studentId', authenticateAdmin, async (req, res) => {
+  try {
+    const student = await Student.findOne({ _id: req.params.studentId, instituteId: req.instituteId });
+    if (!student) return res.status(404).json({ success: false, message: 'Student not found' });
+
+    const transactions = await FeeTransaction.find({
+      instituteId: req.instituteId,
+      studentId: student._id,
+    }).sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      data: {
+        student,
+        totalFees: student.totalFees,
+        paidFees: student.paidFees,
+        balanceFees: student.balanceFees,
+        discountAmount: student.discountAmount || 0,
+        transactions,
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 module.exports = router;

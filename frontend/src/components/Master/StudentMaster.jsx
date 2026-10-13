@@ -52,7 +52,7 @@ const StudentMaster = () => {
         motherMobileNo: '',
         courseId: '',
         batchId: '',
-        academicYear: '2024-2025',
+        academicYear: '2026-2027',
         totalFees: 0,
         paidFees: 0,
         balanceFees: 0,
@@ -68,9 +68,12 @@ const StudentMaster = () => {
                 api.get('/courses'),
                 api.get('/batches')
             ]);
-            setStudents(studentRes.data?.data || studentRes.data || []);
-            setCourses(courseRes.data?.data || courseRes.data || []);
-            setBatches(batchRes.data?.data || batchRes.data || []);
+            const stuList = Array.isArray(studentRes.data) ? studentRes.data : (studentRes.data?.data || []);
+            const crsList = Array.isArray(courseRes.data) ? courseRes.data : (courseRes.data?.data || []);
+            const batList = Array.isArray(batchRes.data) ? batchRes.data : (batchRes.data?.data || []);
+            setStudents(Array.isArray(stuList) ? stuList : []);
+            setCourses(Array.isArray(crsList) ? crsList : []);
+            setBatches(Array.isArray(batList) ? batList : []);
         } catch (err) {
             setToast({ open: true, message: 'Failed to load student directory', severity: 'error' });
         } finally {
@@ -226,11 +229,12 @@ const StudentMaster = () => {
         }
     };
 
-    const filteredStudents = students.filter(st => {
-        const fullName = `${st.fname} ${st.mname || ''} ${st.lname}`.toLowerCase();
+    const safeStudents = Array.isArray(students) ? students : [];
+    const filteredStudents = safeStudents.filter(st => {
+        const fullName = `${st.fname || ''} ${st.mname || ''} ${st.lname || ''}`.toLowerCase();
         const matchesSearch = fullName.includes(searchTerm.toLowerCase()) ||
-            st.grno.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            st.mobileNo.includes(searchTerm) ||
+            (st.grno || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (st.mobileNo || '').includes(searchTerm) ||
             (st.rfid && st.rfid.toLowerCase().includes(searchTerm.toLowerCase()));
 
         const courseIdStr = st.courseId?._id || st.courseId;

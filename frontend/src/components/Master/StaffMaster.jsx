@@ -33,7 +33,8 @@ const StaffMaster = () => {
         try {
             setLoading(true);
             const res = await api.get('/staff');
-            setStaffList(res.data);
+            const list = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+            setStaffList(Array.isArray(list) ? list : []);
         } catch (err) {
             setToast({ open: true, message: 'Failed to load faculty directory', severity: 'error' });
         } finally {
@@ -47,9 +48,10 @@ const StaffMaster = () => {
 
     const handleOpenAdd = () => {
         setEditingStaff(null);
+        const safeLen = Array.isArray(staffList) ? staffList.length : 0;
         setFormData({
             staffName: '',
-            staffId: `KCC-ST${staffList.length + 1}`,
+            staffId: `KCC-ST${safeLen + 1}`,
             designation: 'Instructor / Faculty',
             specialization: 'MS-CIT, Programming, Tally',
             mobileNo: '',
@@ -101,10 +103,11 @@ const StaffMaster = () => {
         }
     };
 
-    const filteredStaff = staffList.filter(s =>
-        s.staffName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        s.staffId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (s.specialization && s.specialization.toLowerCase().includes(searchTerm.toLowerCase()))
+    const safeStaff = Array.isArray(staffList) ? staffList : [];
+    const filteredStaff = safeStaff.filter(s =>
+        (s.name || s.staffName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (s.staffId || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        ((s.specialization || s.department || '') && (s.specialization || s.department || '').toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
     return (
@@ -169,50 +172,63 @@ const StaffMaster = () => {
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {filteredStaff.map((st) => (
-                                        <TableRow key={st._id} hover>
-                                            <TableCell>
-                                                <Chip label={st.staffId} size="small" sx={{ fontWeight: 800, bgcolor: '#e0f2fe', color: '#0284c7' }} />
-                                            </TableCell>
-                                            <TableCell>
-                                                <Box display="flex" alignItems="center" gap={1.5}>
-                                                    <Avatar sx={{ bgcolor: '#0284c7', width: 36, height: 36, fontSize: '13px', fontWeight: 'bold' }}>
-                                                        {st.staffName[0]}
-                                                    </Avatar>
-                                                    <Typography variant="body2" fontWeight="800" color="#0f172a">{st.staffName}</Typography>
-                                                </Box>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Typography variant="body2" fontWeight="600">{st.designation}</Typography>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Typography variant="body2" color="textSecondary">{st.specialization || 'General IT'}</Typography>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Typography variant="body2">{st.mobileNo}</Typography>
-                                                <Typography variant="caption" color="textSecondary">{st.email}</Typography>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Chip
-                                                    label={st.status}
-                                                    size="small"
-                                                    sx={{
-                                                        bgcolor: st.status === 'Active' ? '#dcfce7' : '#fee2e2',
-                                                        color: st.status === 'Active' ? '#166534' : '#991b1b',
-                                                        fontWeight: 800
-                                                    }}
-                                                />
-                                            </TableCell>
-                                            <TableCell sx={{ textAlign: 'right' }}>
-                                                <IconButton size="small" onClick={() => handleOpenEdit(st)} sx={{ color: '#0284c7' }}>
-                                                    <FontAwesomeIcon icon={faEdit} />
-                                                </IconButton>
-                                                <IconButton size="small" onClick={() => handleDelete(st._id, st.staffName)} sx={{ color: '#ef4444' }}>
-                                                    <FontAwesomeIcon icon={faTrash} />
-                                                </IconButton>
+                                    {!Array.isArray(filteredStaff) || filteredStaff.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={7} sx={{ textAlign: 'center', py: 4, color: '#64748b' }}>
+                                                No faculty members found.
                                             </TableCell>
                                         </TableRow>
-                                    ))}
+                                    ) : (
+                                        filteredStaff.map((st) => {
+                                            const displayName = st.name || st.staffName || 'Staff Member';
+                                            const displayMobile = st.phone || st.mobileNo || 'N/A';
+                                            const displaySpec = st.department || st.specialization || 'General IT';
+                                            return (
+                                                <TableRow key={st._id} hover>
+                                                    <TableCell>
+                                                        <Chip label={st.staffId || 'N/A'} size="small" sx={{ fontWeight: 800, bgcolor: '#e0f2fe', color: '#0284c7' }} />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Box display="flex" alignItems="center" gap={1.5}>
+                                                            <Avatar sx={{ bgcolor: '#0284c7', width: 36, height: 36, fontSize: '13px', fontWeight: 'bold' }}>
+                                                                {(displayName[0] || 'S').toUpperCase()}
+                                                            </Avatar>
+                                                            <Typography variant="body2" fontWeight="800" color="#0f172a">{displayName}</Typography>
+                                                        </Box>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Typography variant="body2" fontWeight="600">{st.designation || 'Faculty'}</Typography>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Typography variant="body2" color="textSecondary">{displaySpec}</Typography>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Typography variant="body2">{displayMobile}</Typography>
+                                                        <Typography variant="caption" color="textSecondary">{st.email || ''}</Typography>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Chip
+                                                            label={st.status || 'Active'}
+                                                            size="small"
+                                                            sx={{
+                                                                bgcolor: st.status === 'Active' ? '#dcfce7' : '#fee2e2',
+                                                                color: st.status === 'Active' ? '#166534' : '#991b1b',
+                                                                fontWeight: 800
+                                                            }}
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell sx={{ textAlign: 'right' }}>
+                                                        <IconButton size="small" onClick={() => handleOpenEdit(st)} sx={{ color: '#0284c7' }}>
+                                                            <FontAwesomeIcon icon={faEdit} />
+                                                        </IconButton>
+                                                        <IconButton size="small" onClick={() => handleDelete(st._id, displayName)} sx={{ color: '#ef4444' }}>
+                                                            <FontAwesomeIcon icon={faTrash} />
+                                                        </IconButton>
+                                                    </TableCell>
+                                                </TableRow>
+                                            );
+                                        })
+                                    )}
                                 </TableBody>
                             </Table>
                         </TableContainer>

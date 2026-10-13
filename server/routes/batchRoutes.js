@@ -57,6 +57,19 @@ router.get('/active', authenticateAdmin, async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 });
+/**
+ * Get enrolled students in a batch
+ */
+router.get('/:id/students', authenticateAdmin, async (req, res) => {
+  try {
+    const students = await Student.find({ instituteId: req.instituteId, batchId: req.params.id })
+      .select('fname lname studentId grno rollno mobileNo email paidFees balanceFees status')
+      .sort({ rollno: 1, fname: 1 });
+    res.json(students);
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
 
 /**
  * Create Batch
